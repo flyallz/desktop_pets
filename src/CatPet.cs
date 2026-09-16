@@ -1,4 +1,4 @@
-// Independent Windows photo-pet sample. Uses only Windows .NET Framework assemblies.
+﻿// Independent Windows photo-pet sample. Uses only Windows .NET Framework assemblies.
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -67,7 +67,7 @@ namespace PhotoCat
         }
     }
 
-    internal sealed class PetWindow : Window
+    internal sealed partial class PetWindow : Window
     {
         private readonly Canvas scene = new Canvas();
         private readonly PhotoMotion cat = new PhotoMotion();
@@ -100,7 +100,7 @@ namespace PhotoCat
         public PetWindow(bool selfTest)
         {
             testing = selfTest;
-            Title = "猫咪桌宠 · 动作样品";
+            Title = "猫咪桌宠 · v0.4.2";
             WindowStyle = WindowStyle.None;
             ResizeMode = ResizeMode.NoResize;
             AllowsTransparency = true;
@@ -130,6 +130,7 @@ namespace PhotoCat
             BitmapSource[] walking = new BitmapSource[8];
             for (int i = 0; i < walking.Length; i++) walking[i] = LoadPhoto("cat-walk-" + i + ".png");
             cat.AddWalking(walking);
+            InitializeCompanion();
             cat.Cursor = Cursors.Hand;
             RenderOptions.SetBitmapScalingMode(cat, BitmapScalingMode.HighQuality);
             cat.MouseLeftButtonDown += BeginDrag;
@@ -178,12 +179,13 @@ namespace PhotoCat
                 else
                 {
                     CreateTray();
-                    Say("拖动我换位置 · 右键打开菜单", 8);
+                    Say(settingsNotice ?? "双击换造型 · 右键菜单聊天", 8);
                 }
             };
             Closed += delegate
             {
                 timer.Stop();
+                CloseCompanion();
                 if (tray != null) { tray.Visible = false; tray.Dispose(); }
             };
             timer = new DispatcherTimer(DispatcherPriority.Background);
@@ -256,6 +258,7 @@ namespace PhotoCat
                 }
                 cat.SetPose(pose);
             }
+            TickCompanion();
             PositionBubble();
             if (now > bubbleUntil) bubble.Visibility = Visibility.Collapsed;
             if (!testing && !moving && !menuOpen)
@@ -266,6 +269,7 @@ namespace PhotoCat
         {
             if (!IsCatPixel(cat.PointFromScreen(ScreenCursor()))) return;
             SetClickThrough(false);
+            if (e.ClickCount == 2) { NextLook(); e.Handled = true; return; }
             dragStart = ScreenCursor();
             startLeft = Left;
             startTop = Top;
@@ -462,6 +466,11 @@ namespace PhotoCat
             ContextMenu menu = new ContextMenu();
             menu.FontFamily = new FontFamily("Microsoft YaHei UI");
             menu.FontSize = 13;
+            menu.Items.Add(LooksMenu());
+            menu.Items.Add(MenuAction("和猫咪聊天", OpenChat));
+            menu.Items.Add(MenuAction("打个招呼", delegate { GreetPet(true); }));
+            menu.Items.Add(MenuAction("聊天设置", OpenChatSettings));
+            menu.Items.Add(new Separator());
             menu.Items.Add(MenuAction("摸一摸", Pet));
             menu.Items.Add(MenuAction("走一走", WalkPet));
             MenuItem automatic = MenuAction("自动切换动作", ToggleAutomatic);
@@ -507,6 +516,8 @@ namespace PhotoCat
             Forms.ContextMenuStrip menu = new Forms.ContextMenuStrip();
             menu.Items.Add("显示猫咪", null, delegate { Dispatcher.Invoke(new Action(Reveal)); });
             menu.Items.Add("暂时隐藏", null, delegate { Dispatcher.Invoke(new Action(HidePet)); });
+            menu.Items.Add("和猫咪聊天", null, delegate { Dispatcher.Invoke(new Action(OpenChat)); });
+            menu.Items.Add("聊天设置", null, delegate { Dispatcher.Invoke(new Action(OpenChatSettings)); });
             menu.Items.Add(new Forms.ToolStripSeparator());
             menu.Items.Add("退出", null, delegate { Dispatcher.Invoke(new Action(Close)); });
             tray.ContextMenuStrip = menu;
@@ -561,7 +572,7 @@ namespace PhotoCat
             Tick();
             Check(bubble.Visibility == Visibility.Collapsed, "Response automatically disappears", checks);
             CreateTray();
-            Check(tray.Visible && tray.Icon != null && tray.ContextMenuStrip.Items.Count == 4, "Tray icon and controls created", checks);
+            Check(tray.Visible && tray.Icon != null && tray.ContextMenuStrip.Items.Count == 6, "Tray icon and controls created", checks);
             HidePet();
             Check(!IsVisible && !timer.IsEnabled, "Hide stops rendering timer", checks);
             Reveal();
@@ -572,6 +583,7 @@ namespace PhotoCat
             VerifyLiveTimer(checks);
             VerifyPostures(output, checks);
             VerifyWalking(output, checks);
+            VerifyCompanion(output, checks);
             ApplySize(240, false);
             cat.SetPose(new MotionPose());
             Say("喵。陪你待一会儿。", 30);

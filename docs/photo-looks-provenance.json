@@ -1,0 +1,72 @@
+[
+  {
+    "id": "sweater",
+    "label": "红毛衣",
+    "source": "fbaa070639d2a6ab9746e73dd316b558.jpg",
+    "source_sha256": "0f0ec983f63eb220ef314e49eaa57b06f0a6d5bb2282eceb0b2cbf454453e13f",
+    "crop": null,
+    "processing": "Local IS-Net alpha extraction; original photo colors; canvas normalization only",
+    "canvas": [
+      953,
+      1347
+    ]
+  },
+  {
+    "id": "tilt",
+    "label": "歪头看你",
+    "source": "b002f60e36fce5bae37b0138b74560f8.jpg",
+    "source_sha256": "ae2467fcc01c8091a346cfd38f6695e653741dc4b1a77214fac02eaf7a2f6141",
+    "crop": null,
+    "processing": "Local IS-Net alpha extraction; original photo colors; canvas normalization only",
+    "canvas": [
+      953,
+      1347
+    ]
+  },
+  {
+    "id": "sofa",
+    "label": "乖乖侧坐",
+    "source": "925710e5a860a1445fd7c86a4eff42e1.jpg",
+    "source_sha256": "9e7c89e88799227aea91d9fd7733c2b5311e606df3049f2f5eaf4320b75d2f45",
+    "crop": [
+      100,
+      325,
+      720,
+      850
+    ],
+    "processing": "Local IS-Net alpha extraction; original photo colors; canvas normalization only",
+    "canvas": [
+      953,
+      1347
+    ]
+  },
+  {
+    "id": "belly",
+    "label": "露肚皮睡觉",
+    "source": "e671cf6626cdf65c51ad2220b17f9e3f.jpg",
+    "source_sha256": "7beec2cda707b495edf4f1e2fd912c97eaae9444559f204461032424b7f3567b",
+    "crop": [
+      240,
+      280,
+      960,
+      1280
+    ],
+    "processing": "Local IS-Net alpha extraction; original photo colors; canvas normalization only",
+    "canvas": [
+      953,
+      1347
+    ]
+  },
+  {
+    "id": "back",
+    "label": "毛茸茸的背影",
+    "source": "a734a7e3d5805f082b1d99a078719914.jpg",
+    "source_sha256": "0a49be1b243be5a5d8b5f6762da24807ea5b78ac120437659c257874b9ce91b3",
+    "crop": null,
+    "processing": "Local IS-Net alpha extraction; original photo colors; canvas normalization only",
+    "canvas": [
+      953,
+      1347
+    ]
+  }
+]

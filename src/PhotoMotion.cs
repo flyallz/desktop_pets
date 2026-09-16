@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
@@ -34,7 +34,9 @@ namespace PhotoCat
         private Material[] walkingMaterials;
         private byte[][] walkingAlpha;
         private MotionPose pose;
-        internal double HeadTop { get { return pose.Posture == CatPosture.Sit ? 56 : pose.Posture == CatPosture.Walk ? 812 : pose.Posture == CatPosture.Stretch ? 877 : 959; } }
+        private bool originalIdle = true;
+        private double idleHeadTop = 56;
+        internal double HeadTop { get { return pose.Posture == CatPosture.Sit ? idleHeadTop : pose.Posture == CatPosture.Walk ? 812 : pose.Posture == CatPosture.Stretch ? 877 : 959; } }
         internal MotionPose Pose { get { return pose; } }
         internal int VertexCount { get { return rest.Count; } }
 
@@ -86,6 +88,23 @@ namespace PhotoCat
             model = new GeometryModel3D(mesh, material) { BackMaterial = material };
             viewport.Children.Add(new ModelVisual3D { Content = model });
             SetPose(new MotionPose());
+        }
+
+        internal void SetIdlePhoto(BitmapSource bitmap, bool isOriginal)
+        {
+            SaveAlpha(CatPosture.Sit, bitmap);
+            DiffuseMaterial material = new DiffuseMaterial(new ImageBrush(bitmap));
+            material.Freeze();
+            materials[CatPosture.Sit] = material;
+            originalIdle = isOriginal;
+            idleHeadTop = 56;
+            if (!isOriginal)
+            {
+                byte[] alpha = alphaPixels[CatPosture.Sit];
+                for (int i = 0; i < alpha.Length; i++)
+                    if (alpha[i] >= 128) { idleHeadTop = i / source.PixelWidth; break; }
+            }
+            SetPose(pose);
         }
 
         private void SaveAlpha(CatPosture posture, BitmapSource bitmap)
@@ -166,7 +185,8 @@ namespace PhotoCat
             Point3DCollection positions = new Point3DCollection(rest.Count);
             foreach (Point point in rest)
             {
-                Point moved = Map(point, value);
+                // Other original photos have different face/ear landmarks; keep them intact.
+                Point moved = value.Posture == CatPosture.Sit && !originalIdle ? point : Map(point, value);
                 positions.Add(new Point3D(moved.X, -moved.Y, 0));
             }
             positions.Freeze();
@@ -375,6 +395,11 @@ namespace PhotoCat
         internal void StopWalking()
         {
             if (Activity == CatActivity.Walking) FinishActivity();
+        }
+        internal void ReturnToCompanion()
+        {
+            FinishActivity();
+            WalkDistance = 0; turnPause = 0;
         }
         internal void AfterDrag()
         {

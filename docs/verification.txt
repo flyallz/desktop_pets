@@ -30,7 +30,7 @@ PASS: Tail moves continuously without a jump
 PASS: Petting produces a slow blink and returns to open eyes
 PASS: Repeated petting does not snap closed eyes open
 PASS: Rendered 90 WPF motion frames, including petting and idle actions
-INFO: Mesh vertices = 6000; 90 offscreen frames = 2.48 seconds (not an on-screen FPS measurement)
+INFO: Mesh vertices = 6000; 90 offscreen frames = 2.30 seconds (not an on-screen FPS measurement)
 PASS: Live WPF timer drives motion updates
 PASS: Petting reaches the animated view through the live timer
 PASS: New posture surface remains intact: stretch-start
@@ -97,5 +97,46 @@ PASS: An open menu freezes automatic gait and travel
 PASS: Hidden pets do not advance the walking clock
 PASS: Automatic menu switch disables and stops walking
 PASS: Rendered 168 actual WPF frames of walking in both directions and the other poses
+PASS: Multiple original-photo looks are embedded in the standalone EXE
+PASS: A fresh pet makes no API calls and proactive greetings start disabled
+PASS: Choosing a photo immediately displays and remembers original
+PASS: Choosing a photo immediately displays and remembers sweater
+PASS: Photo silhouette and transparent clicks match without face distortion: sweater
+PASS: Choosing a photo immediately displays and remembers tilt
+PASS: Photo silhouette and transparent clicks match without face distortion: tilt
+PASS: Choosing a photo immediately displays and remembers sofa
+PASS: Photo silhouette and transparent clicks match without face distortion: sofa
+PASS: Choosing a photo immediately displays and remembers belly
+PASS: Photo silhouette and transparent clicks match without face distortion: belly
+PASS: Choosing a photo immediately displays and remembers back
+PASS: Photo silhouette and transparent clicks match without face distortion: back
+PASS: Changing a photo leaves sleep immediately and preserves automatic actions
+PASS: Walking returns to the selected photo without losing the look
+PASS: Repeated double-click action cycles through every photo and wraps
+PASS: Every embedded photo is reachable from the right-click look menu
+PASS: Encrypted preferences survive an atomic save and reload under this Windows account
+PASS: Saved settings contain no plaintext API key
+PASS: Removing the API key persists
+PASS: Damaged settings recover without crashing
+PASS: An unreadable encrypted key preserves the photo and disables paid greetings
+PASS: Missing key and oversized messages never leave the computer
+PASS: Mock API verifies official HTTPS endpoint, bearer authentication, current model and text-only requests
+PASS: Conversation context keeps only the six most recent complete exchanges
+PASS: API error 401 leaves no stuck request or false chat history
+PASS: API error 402 leaves no stuck request or false chat history
+PASS: API error 429 leaves no stuck request or false chat history
+PASS: API error 503 leaves no stuck request or false chat history
+PASS: API error 302 leaves no stuck request or false chat history
+PASS: Malformed responses, network failures and timeouts recover with clear messages
+PASS: A slow request is asynchronous and exposes its busy state
+PASS: Cancel/clear aborts the request and removes in-memory conversation
+PASS: Chat works normally after cancellation
+NOT RUN: Live DeepSeek completion, because no real API key was supplied; all network tests used an in-process fake handler.
+PASS: Actual chat window sends a message, shows the response and forwards the pet bubble
+PASS: Chat is a focusable window while the pet keeps its no-activate behavior
+PASS: Chat UI shows an authentication failure and restores the unsent text for retry
+PASS: Closing the chat window cancels its pending API call
+PASS: Chat settings validate a malformed key without saving
+PASS: Chat settings save a masked key with proactive greeting disabled by default
 PASS: Rendered actual WPF pet view to pet-preview.png
 Not covered: physical mouse input, Windows tray clicks, other Windows computers, mixed-DPI monitors.
