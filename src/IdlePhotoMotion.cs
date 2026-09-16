@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Windows;
 
@@ -11,18 +11,19 @@ namespace PhotoCat
         internal sealed class Eye
         {
             internal readonly Point Center;
-            internal readonly double HalfLength, HalfOpening, Cos, Sin;
-            internal Eye(double x, double y, double length, double opening, double degrees)
+            internal readonly double HalfLength, HalfOpening, Cos, Sin, MarginX, MarginY;
+            internal Eye(double x, double y, double length, double opening, double degrees, bool custom = false)
             {
                 Center = new Point(x, y); HalfLength = length; HalfOpening = opening;
+                MarginX = custom ? Math.Max(40, opening * 3) : 40; MarginY = custom ? Math.Max(42, opening * 3) : 42;
                 Cos = Math.Cos(degrees * Math.PI / 180); Sin = Math.Sin(degrees * Math.PI / 180);
             }
             internal Vector Offset(Point p, double blink)
             {
                 double x = p.X - Center.X, y = p.Y - Center.Y;
                 double u = x * Cos + y * Sin, v = -x * Sin + y * Cos;
-                double weight = Falloff(u, HalfLength, HalfLength + 40)
-                    * Falloff(v, HalfOpening * 1.2, HalfOpening + 42);
+                double weight = Falloff(u, HalfLength, HalfLength + MarginX)
+                    * Falloff(v, HalfOpening * 1.2, HalfOpening + MarginY);
                 double arch = 2 * Math.Max(0, 1 - u * u / (HalfLength * HalfLength));
                 double distance = (HalfOpening * 0.12 + arch - v * 0.86) * weight * blink;
                 return new Vector(-Sin * distance, Cos * distance);
@@ -61,6 +62,8 @@ namespace PhotoCat
             }
         }
 
+        internal bool Custom;
+        internal double MotionScale = 1;
         internal Eye[] Eyes = new Eye[0];
         internal Part LeftEar, RightEar, Tail;
         internal Point Chest;
@@ -104,6 +107,7 @@ namespace PhotoCat
 
         internal Point Map(Point p, MotionPose pose)
         {
+            pose.Blink *= MotionScale; pose.LeftEar *= MotionScale; pose.RightEar *= MotionScale; pose.Tail *= MotionScale;
             Vector shift = new Vector();
             if (ChestWidth > 0 && pose.Breath != 0)
             {
@@ -136,10 +140,10 @@ namespace PhotoCat
             values.Add(end);
             foreach (Eye eye in Eyes)
             {
-                double length = eye.HalfLength + 40, opening = eye.HalfOpening + 42;
+                double length = eye.HalfLength + eye.MarginX, opening = eye.HalfOpening + eye.MarginY;
                 double extent = horizontal ? Math.Abs(eye.Cos) * length + Math.Abs(eye.Sin) * opening
                     : Math.Abs(eye.Sin) * length + Math.Abs(eye.Cos) * opening;
-                Refine(values, end, horizontal ? eye.Center.X : eye.Center.Y, extent, 4);
+                Refine(values, end, horizontal ? eye.Center.X : eye.Center.Y, extent, Custom ? 6 : 4);
             }
             foreach (Part ear in new Part[] { LeftEar, RightEar })
                 if (ear != null)

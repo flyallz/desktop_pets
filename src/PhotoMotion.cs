@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
@@ -97,13 +97,13 @@ namespace PhotoCat
             mesh.Positions = positions;
         }
 
-        internal void SetIdlePhoto(BitmapSource bitmap, string lookId)
+        internal void SetIdlePhoto(BitmapSource bitmap, string lookId, IdlePhotoMotion customMotion = null)
         {
             SaveAlpha(CatPosture.Sit, bitmap);
             DiffuseMaterial material = new DiffuseMaterial(new ImageBrush(bitmap));
             material.Freeze();
             materials[CatPosture.Sit] = material;
-            idleMotion = IdlePhotoMotion.ForLook(lookId);
+            idleMotion = customMotion ?? IdlePhotoMotion.ForLook(lookId);
             BuildSurface(idleMotion);
             idleHeadTop = 56;
             if (idleMotion != null)

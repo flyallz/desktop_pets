@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
@@ -60,7 +60,7 @@ namespace PhotoCat
             for (int i = 0; i < looks.Count; i++) NextLook();
             Check(selectedLook == 1, "Repeated double-click action cycles through every photo and wraps", checks);
             SelectLook(0, false); motion.ReturnToCompanion();
-            Check(LooksMenu().Items.Count == looks.Count, "Every embedded photo is reachable from the right-click look menu", checks);
+            Check(LooksMenu().Items.Count == looks.Count + 2, "Every embedded photo is reachable from the right-click look menu", checks);
             checks.AddRange(Task.Run(delegate { return VerifyChatCore(folder); }).GetAwaiter().GetResult());
             VerifyChatWindows(folder, checks);
         }
@@ -200,16 +200,16 @@ namespace PhotoCat
             finally { settings.Close(); }
         }
 
-        private static void PumpTask(Task task)
+        private static void PumpTask(Task task, int seconds = 5)
         {
             DispatcherFrame frame = new DispatcherFrame();
-            DateTime end = DateTime.UtcNow.AddSeconds(5);
+            DateTime end = DateTime.UtcNow.AddSeconds(seconds);
             DispatcherTimer poll = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(10) };
             poll.Tick += delegate { if (task.IsCompleted || DateTime.UtcNow > end) frame.Continue = false; };
             poll.Start();
             try { if (!task.IsCompleted) Dispatcher.PushFrame(frame); }
             finally { poll.Stop(); }
-            if (!task.IsCompleted) throw new InvalidOperationException("A UI chat operation did not complete");
+            if (!task.IsCompleted) throw new InvalidOperationException("A UI operation did not complete");
             task.GetAwaiter().GetResult();
         }
     }

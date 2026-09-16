@@ -30,7 +30,7 @@ PASS: Tail moves continuously without a jump
 PASS: Petting produces a slow blink and returns to open eyes
 PASS: Repeated petting does not snap closed eyes open
 PASS: Rendered 90 WPF motion frames, including petting and idle actions
-INFO: Mesh vertices = 6000; 90 offscreen frames = 2.25 seconds (not an on-screen FPS measurement)
+INFO: Mesh vertices = 6000; 90 offscreen frames = 2.28 seconds (not an on-screen FPS measurement)
 PASS: Live WPF timer drives motion updates
 PASS: Petting reaches the animated view through the live timer
 PASS: New posture surface remains intact: stretch-start
@@ -124,7 +124,7 @@ PASS: Visible nose, feet and original crop anchors stay fixed during every local
 PASS: Overlapping local motions remain intact: sweater
 PASS: Rendered moving pixels agree with mouse hit regions: sweater (mismatches=0)
 PASS: Rendered 90 continuous WPF frames without tears or missing silhouettes: sweater
-INFO: sweater mesh vertices=15400; offscreen render seconds=4.09 (not screen FPS)
+INFO: sweater mesh vertices=15400; offscreen render seconds=4.19 (not screen FPS)
 PASS: Normal idle/click timing drives the new photo while automatic activities are off: sweater
 PASS: Choosing a photo immediately displays and remembers tilt
 PASS: Neutral photo silhouette and transparent clicks match: tilt
@@ -150,7 +150,7 @@ PASS: Visible nose, feet and original crop anchors stay fixed during every local
 PASS: Overlapping local motions remain intact: tilt
 PASS: Rendered moving pixels agree with mouse hit regions: tilt (mismatches=0)
 PASS: Rendered 90 continuous WPF frames without tears or missing silhouettes: tilt
-INFO: tilt mesh vertices=15688; offscreen render seconds=3.95 (not screen FPS)
+INFO: tilt mesh vertices=15688; offscreen render seconds=4.07 (not screen FPS)
 PASS: Normal idle/click timing drives the new photo while automatic activities are off: tilt
 PASS: Choosing a photo immediately displays and remembers sofa
 PASS: Neutral photo silhouette and transparent clicks match: sofa
@@ -176,7 +176,7 @@ PASS: Visible nose, feet and original crop anchors stay fixed during every local
 PASS: Overlapping local motions remain intact: sofa
 PASS: Rendered moving pixels agree with mouse hit regions: sofa (mismatches=0)
 PASS: Rendered 90 continuous WPF frames without tears or missing silhouettes: sofa
-INFO: sofa mesh vertices=10176; offscreen render seconds=2.91 (not screen FPS)
+INFO: sofa mesh vertices=10176; offscreen render seconds=3.01 (not screen FPS)
 PASS: Normal idle/click timing drives the new photo while automatic activities are off: sofa
 PASS: Choosing a photo immediately displays and remembers belly
 PASS: Neutral photo silhouette and transparent clicks match: belly
@@ -200,7 +200,7 @@ PASS: Visible nose, feet and original crop anchors stay fixed during every local
 PASS: Overlapping local motions remain intact: belly
 PASS: Rendered moving pixels agree with mouse hit regions: belly (mismatches=0)
 PASS: Rendered 90 continuous WPF frames without tears or missing silhouettes: belly
-INFO: belly mesh vertices=3417; offscreen render seconds=2.03 (not screen FPS)
+INFO: belly mesh vertices=3417; offscreen render seconds=2.07 (not screen FPS)
 PASS: Normal idle/click timing drives the new photo while automatic activities are off: belly
 PASS: Choosing a photo immediately displays and remembers back
 PASS: Neutral photo silhouette and transparent clicks match: back
@@ -224,7 +224,7 @@ PASS: Visible nose, feet and original crop anchors stay fixed during every local
 PASS: Overlapping local motions remain intact: back
 PASS: Rendered moving pixels agree with mouse hit regions: back (mismatches=0)
 PASS: Rendered 90 continuous WPF frames without tears or missing silhouettes: back
-INFO: back mesh vertices=4872; offscreen render seconds=2.35 (not screen FPS)
+INFO: back mesh vertices=4872; offscreen render seconds=2.34 (not screen FPS)
 PASS: Normal idle/click timing drives the new photo while automatic activities are off: back
 PASS: Changing a photo leaves sleep immediately and preserves automatic actions
 PASS: Walking returns to the selected photo without losing the look
@@ -254,5 +254,50 @@ PASS: Chat UI shows an authentication failure and restores the unsent text for r
 PASS: Closing the chat window cancels its pending API call
 PASS: Chat settings validate a malformed key without saving
 PASS: Chat settings save a masked key with proactive greeting disabled by default
+PASS: New private photo library starts empty without changing built-in looks
+PASS: Phone photo EXIF orientation 1 is applied correctly before marking
+PASS: Phone photo EXIF orientation 2 is applied correctly before marking
+PASS: Phone photo EXIF orientation 3 is applied correctly before marking
+PASS: Phone photo EXIF orientation 4 is applied correctly before marking
+PASS: Phone photo EXIF orientation 5 is applied correctly before marking
+PASS: Phone photo EXIF orientation 6 is applied correctly before marking
+PASS: Phone photo EXIF orientation 7 is applied correctly before marking
+PASS: Phone photo EXIF orientation 8 is applied correctly before marking
+PASS: Photo editor cannot save before a photo is chosen
+PASS: Transparent PNG imports without cutout dependencies and keeps working after its source file is deleted
+PASS: Photo editor accepts focus while the desktop pet remains non-activating
+PASS: Mouse-marking logic accepts two independent eyes and an optional ear
+PASS: A third eye is rejected without overwriting the two good eye marks
+PASS: Erase brush changes only the preview before saving
+PASS: Undo restores the exact prior photo pixels
+PASS: A manually marked photo runs in the actual WPF animation preview
+PASS: Stopping the preview restores an accurate editing hint
+PASS: Save remains visible at the smaller editor size; long controls scroll separately
+PASS: Empty name gives a recoverable error and writes no photo
+PASS: Saving adds the new look to the pet immediately and keeps custom photos in place
+PASS: Photo pixels, name and eye/ear marks survive a fresh library load
+PASS: Stored look is a self-contained normalized PNG and marks, not a reference to the original file
+PASS: Custom photos receive normal idle/petting gestures and never switch to the sample cat's whole-body poses
+PASS: Whole-body commands cannot replace a custom photo with built-in action assets
+PASS: Saved custom eye marks produce visible blinking with an intact mesh
+PASS: Rendered moving pixels agree with mouse hit regions: custom-8e8ae891f6764d58b71da5ec490782a0 (mismatches=0)
+PASS: Closing the edit window discards draft marks without changing the saved look
+PASS: An existing custom look can be renamed and saved
+PASS: Editing updates the same photo rather than creating duplicates
+PASS: Switching back to a built-in look restores its automatic activities
+PASS: A previously disabled built-in automatic setting stays disabled after a custom-photo visit
+PASS: Deleting the active custom look removes its private file and safely returns to the original cat
+PASS: Photo deletion accepts only generated custom IDs and cannot target other paths
+PASS: A damaged private photo is skipped rather than crashing startup
+PASS: Unsupported or invalid private photo records are skipped without aborting startup
+PASS: Tail and eye marks on a second pose retain useful motion strength
+PASS: Ninety continuous custom eye/tail states keep the photo surface intact
+PASS: Nonfinite or invalid persisted landmarks are rejected before rendering
+PASS: Ordinary JPG starts automatic background removal and disables premature saving
+PASS: Bundled offline helper turns an ordinary JPG into a usable transparent photo with no developer environment [照片准备好了。给眼睛、尾巴画线，再点“看看它动起来”。]
+PASS: Canceling a photo import keeps the previous ready photo and restores controls
+PASS: A broken input reports an error while keeping the prior usable photo
+PASS: An in-progress offline cutout process can be canceled without waiting for model inference
+NOT RUN: Physical mouse drags and file-dialog clicks; Computer Use kernel failed to start (windows sandbox failed: helper_unknown_error: setup refresh had errors). Actual WPF windows, editor methods, saving and rendering were exercised in-process.
 PASS: Rendered actual WPF pet view to pet-preview.png
 Not covered: physical mouse input, Windows tray clicks, other Windows computers, mixed-DPI monitors.

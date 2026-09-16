@@ -1,4 +1,4 @@
-﻿// Independent Windows photo-pet sample. Uses only Windows .NET Framework assemblies.
+// Independent Windows photo-pet sample. Uses only Windows .NET Framework assemblies.
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -100,7 +100,7 @@ namespace PhotoCat
         public PetWindow(bool selfTest)
         {
             testing = selfTest;
-            Title = "猫咪桌宠 · v0.4.3";
+            Title = "猫咪桌宠 · v0.4.4";
             WindowStyle = WindowStyle.None;
             ResizeMode = ResizeMode.NoResize;
             AllowsTransparency = true;
@@ -179,7 +179,7 @@ namespace PhotoCat
                 else
                 {
                     CreateTray();
-                    Say(settingsNotice ?? "双击换造型 · 右键菜单聊天", 8);
+                    Say(settingsNotice ?? "右键添加自己的照片 · 双击换造型", 8);
                 }
             };
             Closed += delegate
@@ -237,7 +237,7 @@ namespace PhotoCat
             double now = clock.Elapsed.TotalSeconds;
             double delta = now - lastTick;
             lastTick = now;
-            if (animate && !moving && !menuOpen)
+            if (animate && !moving && !menuOpen && photoEditor == null)
             {
                 MotionPose pose = motion.Advance(delta);
                 if (pose.Posture == CatPosture.Walk || motion.WalkDistance > 0)
@@ -327,6 +327,7 @@ namespace PhotoCat
 
         private void WalkPet()
         {
+            if (CustomLook) { Say("这张照片会原地陪伴你。", 3); return; }
             animate = true;
             if (motion.Activity != CatActivity.Walking) pendingWalkingDirection = 0;
             motion.Walk();
@@ -337,6 +338,7 @@ namespace PhotoCat
 
         private void ToggleAutomatic()
         {
+            if (CustomLook) { Say("这张照片会原地陪伴你。", 3); return; }
             motion.SetAutomatic(!motion.Automatic);
             Tick();
             Say(motion.Automatic ? "我会自己走走、休息。" : "我在这里陪你。", 2);
@@ -378,6 +380,7 @@ namespace PhotoCat
 
         private void StretchPet()
         {
+            if (CustomLook) { Say("这张照片会原地陪伴你。", 3); return; }
             animate = true;
             motion.Stretch();
             lastTick = clock.Elapsed.TotalSeconds;
@@ -387,6 +390,7 @@ namespace PhotoCat
 
         private void SleepPet()
         {
+            if (CustomLook) { Say("这张照片会原地陪伴你。", 3); return; }
             animate = true;
             motion.Sleep(true);
             lastTick = clock.Elapsed.TotalSeconds;
@@ -396,6 +400,7 @@ namespace PhotoCat
 
         private void WakePet()
         {
+            if (CustomLook) { Say("这张照片会原地陪伴你。", 3); return; }
             animate = true;
             motion.Wake();
             lastTick = clock.Elapsed.TotalSeconds;
@@ -472,12 +477,12 @@ namespace PhotoCat
             menu.Items.Add(MenuAction("聊天设置", OpenChatSettings));
             menu.Items.Add(new Separator());
             menu.Items.Add(MenuAction("摸一摸", Pet));
-            menu.Items.Add(MenuAction("走一走", WalkPet));
+            MenuItem walking = MenuAction("走一走", WalkPet); walking.IsEnabled = !CustomLook; menu.Items.Add(walking);
             MenuItem automatic = MenuAction("自动切换动作", ToggleAutomatic);
-            automatic.IsChecked = motion.Automatic;
+            automatic.IsChecked = motion.Automatic; automatic.IsEnabled = !CustomLook;
             menu.Items.Add(automatic);
-            menu.Items.Add(MenuAction("伸个懒腰", StretchPet));
-            menu.Items.Add(MenuAction(motion.IsSleeping ? "叫醒它" : "睡一会儿", motion.IsSleeping ? (Action)WakePet : SleepPet));
+            MenuItem stretching = MenuAction("伸个懒腰", StretchPet); stretching.IsEnabled = !CustomLook; menu.Items.Add(stretching);
+            MenuItem sleeping = MenuAction(motion.IsSleeping ? "叫醒它" : "睡一会儿", motion.IsSleeping ? (Action)WakePet : SleepPet); sleeping.IsEnabled = !CustomLook; menu.Items.Add(sleeping);
             MenuItem size = new MenuItem { Header = "猫咪大小" };
             foreach (double value in new double[] { 180, 240, 320 })
             {
@@ -584,6 +589,7 @@ namespace PhotoCat
             VerifyPostures(output, checks);
             VerifyWalking(output, checks);
             VerifyCompanion(output, checks);
+            VerifyUserPhotos(output, checks);
             ApplySize(240, false);
             cat.SetPose(new MotionPose());
             Say("喵。陪你待一会儿。", 30);
