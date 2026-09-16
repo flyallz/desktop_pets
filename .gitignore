@@ -1,0 +1,9 @@
+.build/
+.venv/
+__pycache__/
+*.pyc
+/发布包/
+/qa/
+*.zip
+.env
+.env.*

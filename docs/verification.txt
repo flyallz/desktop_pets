@@ -1,0 +1,17 @@
+PASS: PNG contains transparent background and opaque cat
+PASS: Transparent always-on-top window
+PASS: Native Windows window created
+PASS: Click-through native style enabled
+PASS: Click-through native style disabled for interaction
+PASS: No-activate native style preserves typing focus
+PASS: Small size applied
+PASS: Large size applied
+PASS: Photo alpha hit-test separates cat from empty background
+PASS: Petting displays response
+PASS: Pause removes motion
+PASS: Response automatically disappears
+PASS: Tray icon and controls created
+PASS: Hide stops rendering timer
+PASS: Restore shows pet and resumes timer
+PASS: Rendered actual WPF pet view to pet-preview.png
+Not covered: physical mouse input, Windows tray clicks, other Windows computers, mixed-DPI monitors.
