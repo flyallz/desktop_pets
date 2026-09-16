@@ -100,7 +100,7 @@ namespace PhotoCat
         public PetWindow(bool selfTest)
         {
             testing = selfTest;
-            Title = "猫咪桌宠 · v0.4.2";
+            Title = "猫咪桌宠 · v0.4.3";
             WindowStyle = WindowStyle.None;
             ResizeMode = ResizeMode.NoResize;
             AllowsTransparency = true;

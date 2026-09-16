@@ -38,7 +38,7 @@ namespace PhotoCat
                 if (Array.IndexOf(resources, "PhotoCat.looks." + choices[i, 0] + ".png") >= 0)
                     looks.Add(new PhotoLook(choices[i, 0], choices[i, 1], LoadPhoto("looks." + choices[i, 0] + ".png")));
             for (int i = 0; i < looks.Count; i++) if (looks[i].Id == preferences.LookId) selectedLook = i;
-            cat.SetIdlePhoto(looks[selectedLook].Photo, selectedLook == 0);
+            cat.SetIdlePhoto(looks[selectedLook].Photo, looks[selectedLook].Id);
             conversation = new ChatSession(new DeepSeekClient());
             ScheduleGreeting();
         }
@@ -62,7 +62,7 @@ namespace PhotoCat
             selectedLook = index;
             motion.ReturnToCompanion();
             pendingWalkingDirection = 0; walkingRemainder = 0;
-            cat.SetIdlePhoto(looks[index].Photo, index == 0);
+            cat.SetIdlePhoto(looks[index].Photo, looks[index].Id);
             cat.SetPose(motion.Advance(0));
             preferences.LookId = looks[index].Id;
             Say("换成“" + looks[index].Name + "”啦。", 3);

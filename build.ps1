@@ -25,7 +25,7 @@ foreach ($photo in Get-ChildItem -LiteralPath (Join-Path $sampleRoot 'assets\loo
 $arguments += '/win32icon:' + (Join-Path $sampleRoot 'assets\cat.ico')
 $arguments += Join-Path $sampleRoot 'src\CatPet.cs'
 $arguments += Join-Path $sampleRoot 'src\PhotoMotion.cs'
-foreach ($source in @('PetPreferences', 'DeepSeekChat', 'ChatWindows', 'PetCompanion', 'CompanionChecks')) {
+foreach ($source in @('IdlePhotoMotion', 'PetPreferences', 'DeepSeekChat', 'ChatWindows', 'PetCompanion', 'CompanionChecks', 'PhotoMotionChecks')) {
     $arguments += Join-Path $sampleRoot ('src\' + $source + '.cs')
 }
 & $compiler @arguments

@@ -30,7 +30,7 @@ PASS: Tail moves continuously without a jump
 PASS: Petting produces a slow blink and returns to open eyes
 PASS: Repeated petting does not snap closed eyes open
 PASS: Rendered 90 WPF motion frames, including petting and idle actions
-INFO: Mesh vertices = 6000; 90 offscreen frames = 2.30 seconds (not an on-screen FPS measurement)
+INFO: Mesh vertices = 6000; 90 offscreen frames = 2.25 seconds (not an on-screen FPS measurement)
 PASS: Live WPF timer drives motion updates
 PASS: Petting reaches the animated view through the live timer
 PASS: New posture surface remains intact: stretch-start
@@ -101,15 +101,131 @@ PASS: Multiple original-photo looks are embedded in the standalone EXE
 PASS: A fresh pet makes no API calls and proactive greetings start disabled
 PASS: Choosing a photo immediately displays and remembers original
 PASS: Choosing a photo immediately displays and remembers sweater
-PASS: Photo silhouette and transparent clicks match without face distortion: sweater
+PASS: Neutral photo silhouette and transparent clicks match: sweater
+PASS: Photo motion has no folded mesh: sweater/half-blink
+PASS: Only visible anatomy animates: sweater/half-blink (changed pixels 5736)
+PASS: Photo motion has no folded mesh: sweater/closed
+PASS: Only visible anatomy animates: sweater/closed (changed pixels 6295)
+PASS: Blink closes along the photo's own eyelid direction: sweater
+PASS: Blink closes along the photo's own eyelid direction: sweater
+PASS: Photo motion has no folded mesh: sweater/ear-left
+PASS: Only visible anatomy animates: sweater/ear-left (changed pixels 1356)
+PASS: Photo motion has no folded mesh: sweater/ear-right
+PASS: Only visible anatomy animates: sweater/ear-right (changed pixels 2124)
+PASS: Photo motion has no folded mesh: sweater/breathe-in
+PASS: Only visible anatomy animates: sweater/breathe-in (changed pixels 10759)
+PASS: Photo motion has no folded mesh: sweater/breathe-out
+PASS: Only visible anatomy animates: sweater/breathe-out (changed pixels 10658)
+PASS: Photo motion has no folded mesh: sweater/tail-left
+PASS: Only visible anatomy animates: sweater/tail-left (changed pixels 0)
+PASS: Photo motion has no folded mesh: sweater/tail-right
+PASS: Only visible anatomy animates: sweater/tail-right (changed pixels 0)
+PASS: Visible nose, feet and original crop anchors stay fixed during every local gesture: sweater
+PASS: Overlapping local motions remain intact: sweater
+PASS: Rendered moving pixels agree with mouse hit regions: sweater (mismatches=0)
+PASS: Rendered 90 continuous WPF frames without tears or missing silhouettes: sweater
+INFO: sweater mesh vertices=15400; offscreen render seconds=4.09 (not screen FPS)
+PASS: Normal idle/click timing drives the new photo while automatic activities are off: sweater
 PASS: Choosing a photo immediately displays and remembers tilt
-PASS: Photo silhouette and transparent clicks match without face distortion: tilt
+PASS: Neutral photo silhouette and transparent clicks match: tilt
+PASS: Photo motion has no folded mesh: tilt/half-blink
+PASS: Only visible anatomy animates: tilt/half-blink (changed pixels 6686)
+PASS: Photo motion has no folded mesh: tilt/closed
+PASS: Only visible anatomy animates: tilt/closed (changed pixels 7188)
+PASS: Blink closes along the photo's own eyelid direction: tilt
+PASS: Blink closes along the photo's own eyelid direction: tilt
+PASS: Photo motion has no folded mesh: tilt/ear-left
+PASS: Only visible anatomy animates: tilt/ear-left (changed pixels 3405)
+PASS: Photo motion has no folded mesh: tilt/ear-right
+PASS: Only visible anatomy animates: tilt/ear-right (changed pixels 704)
+PASS: Photo motion has no folded mesh: tilt/breathe-in
+PASS: Only visible anatomy animates: tilt/breathe-in (changed pixels 8074)
+PASS: Photo motion has no folded mesh: tilt/breathe-out
+PASS: Only visible anatomy animates: tilt/breathe-out (changed pixels 8008)
+PASS: Photo motion has no folded mesh: tilt/tail-left
+PASS: Only visible anatomy animates: tilt/tail-left (changed pixels 0)
+PASS: Photo motion has no folded mesh: tilt/tail-right
+PASS: Only visible anatomy animates: tilt/tail-right (changed pixels 0)
+PASS: Visible nose, feet and original crop anchors stay fixed during every local gesture: tilt
+PASS: Overlapping local motions remain intact: tilt
+PASS: Rendered moving pixels agree with mouse hit regions: tilt (mismatches=0)
+PASS: Rendered 90 continuous WPF frames without tears or missing silhouettes: tilt
+INFO: tilt mesh vertices=15688; offscreen render seconds=3.95 (not screen FPS)
+PASS: Normal idle/click timing drives the new photo while automatic activities are off: tilt
 PASS: Choosing a photo immediately displays and remembers sofa
-PASS: Photo silhouette and transparent clicks match without face distortion: sofa
+PASS: Neutral photo silhouette and transparent clicks match: sofa
+PASS: Photo motion has no folded mesh: sofa/half-blink
+PASS: Only visible anatomy animates: sofa/half-blink (changed pixels 2706)
+PASS: Photo motion has no folded mesh: sofa/closed
+PASS: Only visible anatomy animates: sofa/closed (changed pixels 3284)
+PASS: Blink closes along the photo's own eyelid direction: sofa
+PASS: Blink closes along the photo's own eyelid direction: sofa
+PASS: Photo motion has no folded mesh: sofa/ear-left
+PASS: Only visible anatomy animates: sofa/ear-left (changed pixels 476)
+PASS: Photo motion has no folded mesh: sofa/ear-right
+PASS: Only visible anatomy animates: sofa/ear-right (changed pixels 459)
+PASS: Photo motion has no folded mesh: sofa/breathe-in
+PASS: Only visible anatomy animates: sofa/breathe-in (changed pixels 6682)
+PASS: Photo motion has no folded mesh: sofa/breathe-out
+PASS: Only visible anatomy animates: sofa/breathe-out (changed pixels 6507)
+PASS: Photo motion has no folded mesh: sofa/tail-left
+PASS: Only visible anatomy animates: sofa/tail-left (changed pixels 2344)
+PASS: Photo motion has no folded mesh: sofa/tail-right
+PASS: Only visible anatomy animates: sofa/tail-right (changed pixels 2351)
+PASS: Visible nose, feet and original crop anchors stay fixed during every local gesture: sofa
+PASS: Overlapping local motions remain intact: sofa
+PASS: Rendered moving pixels agree with mouse hit regions: sofa (mismatches=0)
+PASS: Rendered 90 continuous WPF frames without tears or missing silhouettes: sofa
+INFO: sofa mesh vertices=10176; offscreen render seconds=2.91 (not screen FPS)
+PASS: Normal idle/click timing drives the new photo while automatic activities are off: sofa
 PASS: Choosing a photo immediately displays and remembers belly
-PASS: Photo silhouette and transparent clicks match without face distortion: belly
+PASS: Neutral photo silhouette and transparent clicks match: belly
+PASS: Photo motion has no folded mesh: belly/half-blink
+PASS: Only visible anatomy animates: belly/half-blink (changed pixels 0)
+PASS: Photo motion has no folded mesh: belly/closed
+PASS: Only visible anatomy animates: belly/closed (changed pixels 0)
+PASS: Photo motion has no folded mesh: belly/ear-left
+PASS: Only visible anatomy animates: belly/ear-left (changed pixels 175)
+PASS: Photo motion has no folded mesh: belly/ear-right
+PASS: Only visible anatomy animates: belly/ear-right (changed pixels 352)
+PASS: Photo motion has no folded mesh: belly/breathe-in
+PASS: Only visible anatomy animates: belly/breathe-in (changed pixels 6808)
+PASS: Photo motion has no folded mesh: belly/breathe-out
+PASS: Only visible anatomy animates: belly/breathe-out (changed pixels 6545)
+PASS: Photo motion has no folded mesh: belly/tail-left
+PASS: Only visible anatomy animates: belly/tail-left (changed pixels 2787)
+PASS: Photo motion has no folded mesh: belly/tail-right
+PASS: Only visible anatomy animates: belly/tail-right (changed pixels 2934)
+PASS: Visible nose, feet and original crop anchors stay fixed during every local gesture: belly
+PASS: Overlapping local motions remain intact: belly
+PASS: Rendered moving pixels agree with mouse hit regions: belly (mismatches=0)
+PASS: Rendered 90 continuous WPF frames without tears or missing silhouettes: belly
+INFO: belly mesh vertices=3417; offscreen render seconds=2.03 (not screen FPS)
+PASS: Normal idle/click timing drives the new photo while automatic activities are off: belly
 PASS: Choosing a photo immediately displays and remembers back
-PASS: Photo silhouette and transparent clicks match without face distortion: back
+PASS: Neutral photo silhouette and transparent clicks match: back
+PASS: Photo motion has no folded mesh: back/half-blink
+PASS: Only visible anatomy animates: back/half-blink (changed pixels 0)
+PASS: Photo motion has no folded mesh: back/closed
+PASS: Only visible anatomy animates: back/closed (changed pixels 0)
+PASS: Photo motion has no folded mesh: back/ear-left
+PASS: Only visible anatomy animates: back/ear-left (changed pixels 953)
+PASS: Photo motion has no folded mesh: back/ear-right
+PASS: Only visible anatomy animates: back/ear-right (changed pixels 1048)
+PASS: Photo motion has no folded mesh: back/breathe-in
+PASS: Only visible anatomy animates: back/breathe-in (changed pixels 25330)
+PASS: Photo motion has no folded mesh: back/breathe-out
+PASS: Only visible anatomy animates: back/breathe-out (changed pixels 25308)
+PASS: Photo motion has no folded mesh: back/tail-left
+PASS: Only visible anatomy animates: back/tail-left (changed pixels 4067)
+PASS: Photo motion has no folded mesh: back/tail-right
+PASS: Only visible anatomy animates: back/tail-right (changed pixels 4095)
+PASS: Visible nose, feet and original crop anchors stay fixed during every local gesture: back
+PASS: Overlapping local motions remain intact: back
+PASS: Rendered moving pixels agree with mouse hit regions: back (mismatches=0)
+PASS: Rendered 90 continuous WPF frames without tears or missing silhouettes: back
+INFO: back mesh vertices=4872; offscreen render seconds=2.35 (not screen FPS)
+PASS: Normal idle/click timing drives the new photo while automatic activities are off: back
 PASS: Changing a photo leaves sleep immediately and preserves automatic actions
 PASS: Walking returns to the selected photo without losing the look
 PASS: Repeated double-click action cycles through every photo and wraps

@@ -32,7 +32,7 @@ namespace PhotoCat
                 if (i > 0)
                 {
                     byte[] bytes = new byte[953 * 1347 * 4]; looks[i].Photo.CopyPixels(bytes, 953 * 4, 0);
-                    cat.SetPose(new MotionPose { Blink = 1, Tail = 1, LeftEar = 1, Breath = 1 });
+                    cat.SetPose(new MotionPose());
                     int hit = 0, clear = 0;
                     for (int y = 0; y < 1347; y += 37)
                         for (int x = 0; x < 953; x += 31)
@@ -40,13 +40,15 @@ namespace PhotoCat
                             Point original = new Point(x + 0.25, y + 0.25);
                             Point local = new Point(original.X * cat.ActualWidth / 953, original.Y * cat.ActualHeight / 1347);
                             if ((cat.SourcePoint(local) - original).Length > 0.01)
-                                throw new InvalidOperationException("A new photo inherited the original face/ear deformation");
+                                throw new InvalidOperationException("The neutral photo no longer matches its original canvas");
                             bool expected = bytes[(y * 953 + x) * 4 + 3] >= 30;
                             if (cat.IsPhotoPixel(local) != expected) throw new InvalidOperationException("Photo look hit regions mismatched");
                             if (expected) hit++; else clear++;
                         }
-                    Check(hit > 20 && clear > 20, "Photo silhouette and transparent clicks match without face distortion: " + looks[i].Id, checks);
+                    Check(hit > 20 && clear > 20, "Neutral photo silhouette and transparent clicks match: " + looks[i].Id, checks);
                 }
+                if (i > 0) VerifyPhotoLocalMotion(i, folder, checks);
+                cat.SetPose(new MotionPose());
                 bubble.Visibility = Visibility.Collapsed;
                 SaveElement(scene, (int)Math.Ceiling(Width), (int)Math.Ceiling(Height), Path.Combine(folder, "look-" + looks[i].Id + ".png"));
             }

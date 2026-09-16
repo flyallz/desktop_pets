@@ -34,7 +34,7 @@ namespace PhotoCat
         private Material[] walkingMaterials;
         private byte[][] walkingAlpha;
         private MotionPose pose;
-        private bool originalIdle = true;
+        private IdlePhotoMotion idleMotion;
         private double idleHeadTop = 56;
         internal double HeadTop { get { return pose.Posture == CatPosture.Sit ? idleHeadTop : pose.Posture == CatPosture.Walk ? 812 : pose.Posture == CatPosture.Stretch ? 877 : 959; } }
         internal MotionPose Pose { get { return pose; } }
@@ -55,8 +55,25 @@ namespace PhotoCat
             double width = bitmap.PixelWidth, height = bitmap.PixelHeight;
             viewport.Camera = new OrthographicCamera(new Point3D(width / 2, -height / 2, 2000),
                 new Vector3D(0, 0, -1), new Vector3D(0, 1, 0), width);
-            List<double> xs = Grid(width, 28, 410, 584, 4);
-            List<double> ys = Grid(height, 28, 192, 268, 3);
+            BuildSurface(null);
+            ImageBrush photo = new ImageBrush(bitmap) { ViewportUnits = BrushMappingMode.Absolute,
+                Viewport = new Rect(0, 0, 1, 1), TileMode = TileMode.None };
+            photo.Freeze();
+            DiffuseMaterial material = new DiffuseMaterial(photo);
+            material.Freeze();
+            viewport.Children.Add(new ModelVisual3D { Content = new AmbientLight(Colors.White) });
+            materials[CatPosture.Sit] = material;
+            model = new GeometryModel3D(mesh, material) { BackMaterial = material };
+            viewport.Children.Add(new ModelVisual3D { Content = model });
+            SetPose(new MotionPose());
+        }
+
+        private void BuildSurface(IdlePhotoMotion profile)
+        {
+            rest.Clear();
+            double width = source.PixelWidth, height = source.PixelHeight;
+            List<double> xs = profile == null ? Grid(width, 28, 410, 584, 4) : profile.Grid(width, true);
+            List<double> ys = profile == null ? Grid(height, 28, 192, 268, 3) : profile.Grid(height, false);
             PointCollection uv = new PointCollection();
             Point3DCollection positions = new Point3DCollection();
             Int32Collection triangles = new Int32Collection();
@@ -78,27 +95,18 @@ namespace PhotoCat
             mesh.TextureCoordinates = uv;
             mesh.TriangleIndices = triangles;
             mesh.Positions = positions;
-            ImageBrush photo = new ImageBrush(bitmap) { ViewportUnits = BrushMappingMode.Absolute,
-                Viewport = new Rect(0, 0, 1, 1), TileMode = TileMode.None };
-            photo.Freeze();
-            DiffuseMaterial material = new DiffuseMaterial(photo);
-            material.Freeze();
-            viewport.Children.Add(new ModelVisual3D { Content = new AmbientLight(Colors.White) });
-            materials[CatPosture.Sit] = material;
-            model = new GeometryModel3D(mesh, material) { BackMaterial = material };
-            viewport.Children.Add(new ModelVisual3D { Content = model });
-            SetPose(new MotionPose());
         }
 
-        internal void SetIdlePhoto(BitmapSource bitmap, bool isOriginal)
+        internal void SetIdlePhoto(BitmapSource bitmap, string lookId)
         {
             SaveAlpha(CatPosture.Sit, bitmap);
             DiffuseMaterial material = new DiffuseMaterial(new ImageBrush(bitmap));
             material.Freeze();
             materials[CatPosture.Sit] = material;
-            originalIdle = isOriginal;
+            idleMotion = IdlePhotoMotion.ForLook(lookId);
+            BuildSurface(idleMotion);
             idleHeadTop = 56;
-            if (!isOriginal)
+            if (idleMotion != null)
             {
                 byte[] alpha = alphaPixels[CatPosture.Sit];
                 for (int i = 0; i < alpha.Length; i++)
@@ -185,8 +193,7 @@ namespace PhotoCat
             Point3DCollection positions = new Point3DCollection(rest.Count);
             foreach (Point point in rest)
             {
-                // Other original photos have different face/ear landmarks; keep them intact.
-                Point moved = value.Posture == CatPosture.Sit && !originalIdle ? point : Map(point, value);
+                Point moved = value.Posture == CatPosture.Sit && idleMotion != null ? idleMotion.Map(point, value) : Map(point, value);
                 positions.Add(new Point3D(moved.X, -moved.Y, 0));
             }
             positions.Freeze();
