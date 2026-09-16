@@ -70,11 +70,11 @@ namespace PhotoCat
     internal sealed class PetWindow : Window
     {
         private readonly Canvas scene = new Canvas();
-        private readonly Image cat = new Image();
+        private readonly PhotoMotion cat = new PhotoMotion();
         private readonly TextBlock message = new TextBlock();
         private readonly Border bubble = new Border();
-        private readonly ScaleTransform breathing = new ScaleTransform(1, 1);
-        private readonly TranslateTransform nudge = new TranslateTransform();
+        private readonly PetMotion motion = new PetMotion(Environment.TickCount);
+        private double lastTick;
         private readonly Stopwatch clock = Stopwatch.StartNew();
         private readonly DispatcherTimer timer;
         private readonly BitmapSource bitmap;
@@ -91,14 +91,13 @@ namespace PhotoCat
         private Point dragStart;
         private double startLeft, startTop;
         private double bubbleUntil;
-        private double petAt = -10;
         private double petSize = 240;
         private int petCount;
 
         public PetWindow(bool selfTest)
         {
             testing = selfTest;
-            Title = "猫咪桌宠 · 试用样品";
+            Title = "猫咪桌宠 · 动作样品";
             WindowStyle = WindowStyle.None;
             ResizeMode = ResizeMode.NoResize;
             AllowsTransparency = true;
@@ -123,14 +122,8 @@ namespace PhotoCat
             stride = bitmap.PixelWidth * 4;
             pixels = new byte[stride * bitmap.PixelHeight];
             bitmap.CopyPixels(pixels, stride, 0);
-            cat.Source = bitmap;
-            cat.Stretch = Stretch.Fill;
+            cat.SetPhoto(bitmap);
             cat.Cursor = Cursors.Hand;
-            cat.RenderTransformOrigin = new Point(0.5, 0.97);
-            TransformGroup transforms = new TransformGroup();
-            transforms.Children.Add(breathing);
-            transforms.Children.Add(nudge);
-            cat.RenderTransform = transforms;
             RenderOptions.SetBitmapScalingMode(cat, BitmapScalingMode.HighQuality);
             cat.MouseLeftButtonDown += BeginDrag;
             cat.MouseMove += ContinueDrag;
@@ -198,8 +191,9 @@ namespace PhotoCat
         private bool IsCatPixel(Point local)
         {
             if (cat.ActualWidth <= 0 || cat.ActualHeight <= 0) return false;
-            int x = (int)Math.Floor(local.X / cat.ActualWidth * bitmap.PixelWidth);
-            int y = (int)Math.Floor(local.Y / cat.ActualHeight * bitmap.PixelHeight);
+            Point original = cat.SourcePoint(local);
+            int x = (int)Math.Floor(original.X);
+            int y = (int)Math.Floor(original.Y);
             return x >= 0 && y >= 0 && x < bitmap.PixelWidth && y < bitmap.PixelHeight
                 && pixels[y * stride + x * 4 + 3] >= 30;
         }
@@ -222,11 +216,9 @@ namespace PhotoCat
         {
             if (!IsVisible) return;
             double now = clock.Elapsed.TotalSeconds;
-            double wave = animate ? Math.Sin(now * Math.PI / 2.3) : 0;
-            breathing.ScaleY = 1 + wave * 0.003;
-            breathing.ScaleX = 1 - wave * 0.001;
-            double elapsed = now - petAt;
-            nudge.Y = animate && elapsed >= 0 && elapsed < 0.65 ? -3 * Math.Sin(elapsed / 0.65 * Math.PI) : 0;
+            double delta = now - lastTick;
+            lastTick = now;
+            if (animate) cat.SetPose(motion.Advance(delta));
             if (now > bubbleUntil) bubble.Visibility = Visibility.Collapsed;
             if (!testing && !moving && !menuOpen)
                 SetClickThrough(!IsCatPixel(cat.PointFromScreen(ScreenCursor())));
@@ -268,7 +260,7 @@ namespace PhotoCat
         {
             string[] replies = { "喵。", "呼噜呼噜…", "陪你待一会儿。" };
             Say(replies[petCount++ % replies.Length], 2.8);
-            petAt = clock.Elapsed.TotalSeconds;
+            if (animate) motion.Pet();
         }
 
         private void Say(string text, double seconds)
@@ -314,8 +306,10 @@ namespace PhotoCat
         private void Reveal()
         {
             Show();
+            lastTick = clock.Elapsed.TotalSeconds;
             timer.Start();
             PlaceAtHome();
+            if (testing) { Left = -10000; Top = -10000; }
             Say("我在这里。", 2);
         }
 
@@ -349,7 +343,12 @@ namespace PhotoCat
                 size.Items.Add(item);
             }
             menu.Items.Add(size);
-            menu.Items.Add(MenuAction(animate ? "暂停呼吸动作" : "恢复呼吸动作", delegate { animate = !animate; Tick(); }));
+            menu.Items.Add(MenuAction(animate ? "暂停动作" : "恢复动作", delegate
+            {
+                animate = !animate;
+                lastTick = clock.Elapsed.TotalSeconds;
+                Tick();
+            }));
             menu.Items.Add(new Separator());
             menu.Items.Add(MenuAction("暂时隐藏（从托盘恢复）", HidePet));
             menu.Items.Add(MenuAction("回到屏幕右下角", PlaceAtHome));
@@ -383,6 +382,8 @@ namespace PhotoCat
         internal void VerifyAndRender(string output)
         {
             Directory.CreateDirectory(output);
+            timer.Stop();
+            cat.SetPose(new MotionPose());
             List<string> checks = new List<string>();
             long clear = 0, solid = 0;
             for (int i = 3; i < pixels.Length; i += 4) { if (pixels[i] == 0) clear++; if (pixels[i] >= 240) solid++; }
@@ -416,9 +417,11 @@ namespace PhotoCat
             Check(transparentSamples > 0 && hitSamples > 0, "Photo alpha hit-test separates cat from empty background", checks);
             Pet();
             Check(bubble.Visibility == Visibility.Visible && message.Text == "喵。", "Petting displays response", checks);
+            cat.SetPose(new MotionPose { Blink = 0.5, Tail = 0.3 });
             animate = false;
             Tick();
-            Check(breathing.ScaleY == 1 && nudge.Y == 0, "Pause removes motion", checks);
+            Check(cat.Pose.Blink == 0.5 && cat.Pose.Tail == 0.3, "Pause freezes all local movements", checks);
+            cat.SetPose(new MotionPose());
             bubbleUntil = -1;
             Tick();
             Check(bubble.Visibility == Visibility.Collapsed, "Response automatically disappears", checks);
@@ -428,6 +431,11 @@ namespace PhotoCat
             Check(!IsVisible && !timer.IsEnabled, "Hide stops rendering timer", checks);
             Reveal();
             Check(IsVisible && timer.IsEnabled, "Restore shows pet and resumes timer", checks);
+            timer.Stop();
+            VerifyMotion(output, checks);
+            ApplySize(240, false);
+            VerifyLiveTimer(checks);
+            cat.SetPose(new MotionPose());
             Say("喵。陪你待一会儿。", 30);
             scene.UpdateLayout();
             RenderTargetBitmap preview = new RenderTargetBitmap((int)Math.Ceiling(Width), (int)Math.Ceiling(Height), 96, 96, PixelFormats.Pbgra32);
@@ -438,6 +446,159 @@ namespace PhotoCat
             checks.Add("PASS: Rendered actual WPF pet view to pet-preview.png");
             checks.Add("Not covered: physical mouse input, Windows tray clicks, other Windows computers, mixed-DPI monitors.");
             File.WriteAllLines(Path.Combine(output, "verification.txt"), checks.ToArray());
+        }
+
+        private void VerifyLiveTimer(List<string> checks)
+        {
+            int ticks = 0;
+            double blink = 0;
+            EventHandler observe = delegate { ticks++; blink = Math.Max(blink, cat.Pose.Blink); };
+            DispatcherFrame loop = new DispatcherFrame();
+            DispatcherTimer finish = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1.65) };
+            finish.Tick += delegate { loop.Continue = false; };
+            animate = true;
+            motion.Pet();
+            lastTick = clock.Elapsed.TotalSeconds;
+            timer.Tick += observe;
+            timer.Start();
+            finish.Start();
+            try { Dispatcher.PushFrame(loop); }
+            finally { finish.Stop(); timer.Stop(); timer.Tick -= observe; animate = false; }
+            Check(ticks >= 10, "Live WPF timer drives motion updates", checks);
+            Check(blink > 0.9, "Petting reaches the animated view through the live timer", checks);
+        }
+
+        private byte[] SaveMotionFrame(string path)
+        {
+            scene.UpdateLayout();
+            RenderTargetBitmap sceneFrame = new RenderTargetBitmap((int)Math.Ceiling(Width),
+                (int)Math.Ceiling(Height), 96, 96, PixelFormats.Pbgra32);
+            sceneFrame.Render(scene);
+            CroppedBitmap frame = new CroppedBitmap(sceneFrame, new Int32Rect(12, 48,
+                (int)Math.Ceiling(cat.Width), (int)Math.Ceiling(cat.Height)));
+            byte[] rendered = new byte[frame.PixelWidth * frame.PixelHeight * 4];
+            frame.CopyPixels(rendered, frame.PixelWidth * 4, 0);
+            int solid = 0, clear = 0;
+            for (int i = 3; i < rendered.Length; i += 4)
+            {
+                if (rendered[i] >= 240) solid++;
+                if (rendered[i] == 0) clear++;
+            }
+            if (solid < rendered.Length / 4 / 5 || clear < rendered.Length / 4 / 20)
+                throw new InvalidOperationException("Motion frame lost its cat or transparent background");
+            PngBitmapEncoder encoder = new PngBitmapEncoder();
+            encoder.Frames.Add(BitmapFrame.Create(frame));
+            using (Stream file = File.Create(path)) encoder.Save(file);
+            return rendered;
+        }
+
+        private void VerifyMotion(string output, List<string> checks)
+        {
+            string motionPath = Path.Combine(output, "motion");
+            Directory.CreateDirectory(motionPath);
+            bubble.Visibility = Visibility.Collapsed;
+            ApplySize(640, false);
+            scene.UpdateLayout();
+            MotionPose[] poses = {
+                new MotionPose(), new MotionPose { Blink = 0.5 }, new MotionPose { Blink = 1 },
+                new MotionPose { LeftEar = 1 }, new MotionPose { RightEar = 1 },
+                new MotionPose { Tail = -1 }, new MotionPose { Tail = 1 },
+                new MotionPose { Blink = 1, LeftEar = 1, Tail = 1, Breath = 1 }
+            };
+            string[] names = { "rest", "half-blink", "closed", "left-ear", "right-ear", "tail-left", "tail-right", "combined" };
+            byte[] restingPixels = null;
+            for (int i = 0; i < poses.Length; i++)
+            {
+                cat.SetPose(poses[i]);
+                Check(cat.HasValidSurface(), "No torn or folded surface: " + names[i], checks);
+                Point[] planted = { new Point(320, 960), new Point(800, 856), new Point(492, 290), new Point(483, 780) };
+                foreach (Point point in planted)
+                    if ((PhotoMotion.Map(point, poses[i]) - point).Length > 0.01)
+                        throw new InvalidOperationException("Paws, nose or tail root shifted");
+                byte[] frame = SaveMotionFrame(Path.Combine(motionPath, names[i] + ".png"));
+                if (i == 0) restingPixels = frame;
+                else
+                    for (int y = 540; y < 650; y++)
+                        for (int x = 420 * 4; x < 610 * 4; x++)
+                            if (frame[y * 640 * 4 + x] != restingPixels[y * 640 * 4 + x])
+                                throw new InvalidOperationException("Stationary paw pixels flickered during " + names[i]);
+            }
+            checks.Add("PASS: Paws, nose and tail root stay fixed in all extreme poses");
+            checks.Add("PASS: Rendered stationary paw pixels remain identical during all gestures");
+            // Verify actual moved edge pixels against the inverse triangle lookup.
+            foreach (double sway in new double[] { -1, 1 })
+            {
+                MotionPose pose = new MotionPose { Tail = sway };
+                cat.SetPose(pose);
+                int changedPixels = 0;
+                for (int y = 1120; y < 1280; y += 13)
+                    for (int x = 95; x < 430; x += 13)
+                    {
+                        Point original = new Point(x + 0.4, y + 0.4);
+                        Point moved = PhotoMotion.Map(original, pose);
+                        Point local = new Point(moved.X * cat.ActualWidth / bitmap.PixelWidth,
+                            moved.Y * cat.ActualHeight / bitmap.PixelHeight);
+                        Point recovered = cat.SourcePoint(local);
+                        if ((recovered - original).Length > 1.0)
+                            throw new InvalidOperationException("Moving tail hit-test drifted away from the photo");
+                        // Avoid antialiased boundaries where a subpixel difference changes the threshold.
+                        byte a = pixels[y * stride + x * 4 + 3];
+                        if (a == 0 || a == 255)
+                        {
+                            bool uniform = true;
+                            for (int ny = y - 1; ny <= y + 1; ny++)
+                                for (int nx = x - 1; nx <= x + 1; nx++)
+                                    if (pixels[ny * stride + nx * 4 + 3] != a) uniform = false;
+                            if (uniform && IsCatPixel(local) != (a == 255))
+                                throw new InvalidOperationException("Transparent moving tail hit-test failed");
+                        }
+                        if ((moved - original).Length > 8) changedPixels++;
+                    }
+                Check(changedPixels > 20, "Mouse follows tail silhouette at sway " + sway, checks);
+            }
+            PetMotion schedule = new PetMotion(42);
+            bool blinked = false, earMoved = false, tailMoved = false, rested = false;
+            double largestStep = 0;
+            Point previousTip = new Point(180, 1240);
+            for (int i = 0; i < 25 * 30; i++)
+            {
+                MotionPose pose = schedule.Advance(0.04);
+                cat.SetPose(pose);
+                if (!cat.HasValidSurface()) throw new InvalidOperationException("Surface folded during continuous motion");
+                blinked |= pose.Blink > 0.85;
+                earMoved |= pose.LeftEar > 0.7 || pose.RightEar > 0.7;
+                tailMoved |= Math.Abs(pose.Tail) > 0.4;
+                rested |= i > 100 && pose.Blink == 0 && pose.LeftEar == 0 && pose.RightEar == 0 && pose.Tail == 0;
+                Point tip = PhotoMotion.Map(new Point(180, 1240), pose);
+                largestStep = Math.Max(largestStep, (tip - previousTip).Length);
+                previousTip = tip;
+            }
+            Check(blinked && earMoved && tailMoved && rested, "30-second idle sequence includes blinks, single-ear twitches, tail movement and pauses", checks);
+            Check(largestStep < 2, "Tail moves continuously without a jump", checks);
+            schedule = new PetMotion(7);
+            schedule.Pet();
+            double slowBlink = 0;
+            MotionPose last = new MotionPose();
+            for (int i = 0; i < 41; i++) { last = schedule.Advance(0.04); slowBlink = Math.Max(slowBlink, last.Blink); }
+            Check(slowBlink > 0.9 && last.Blink == 0, "Petting produces a slow blink and returns to open eyes", checks);
+            schedule = new PetMotion(7);
+            schedule.Pet();
+            for (int i = 0; i < 12; i++) last = schedule.Advance(0.04);
+            schedule.Pet();
+            Check(Math.Abs(schedule.Advance(0).Blink - last.Blink) < 0.00001,
+                "Repeated petting does not snap closed eyes open", checks);
+            ApplySize(400, false);
+            scene.UpdateLayout();
+            schedule = new PetMotion(42);
+            Stopwatch rendering = Stopwatch.StartNew();
+            for (int frame = 0; frame < 90; frame++)
+            {
+                if (frame == 15) schedule.Pet();
+                cat.SetPose(schedule.Advance(1.0 / 15));
+                SaveMotionFrame(Path.Combine(motionPath, "frame-" + frame.ToString("D3") + ".png"));
+            }
+            checks.Add("PASS: Rendered 90 WPF motion frames, including petting and idle actions");
+            checks.Add("INFO: Mesh vertices = " + cat.VertexCount + "; 90 offscreen frames = " + rendering.Elapsed.TotalSeconds.ToString("F2") + " seconds (not an on-screen FPS measurement)");
         }
 
         private static void Check(bool value, string label, List<string> checks)

@@ -8,10 +8,30 @@ PASS: Small size applied
 PASS: Large size applied
 PASS: Photo alpha hit-test separates cat from empty background
 PASS: Petting displays response
-PASS: Pause removes motion
+PASS: Pause freezes all local movements
 PASS: Response automatically disappears
 PASS: Tray icon and controls created
 PASS: Hide stops rendering timer
 PASS: Restore shows pet and resumes timer
+PASS: No torn or folded surface: rest
+PASS: No torn or folded surface: half-blink
+PASS: No torn or folded surface: closed
+PASS: No torn or folded surface: left-ear
+PASS: No torn or folded surface: right-ear
+PASS: No torn or folded surface: tail-left
+PASS: No torn or folded surface: tail-right
+PASS: No torn or folded surface: combined
+PASS: Paws, nose and tail root stay fixed in all extreme poses
+PASS: Rendered stationary paw pixels remain identical during all gestures
+PASS: Mouse follows tail silhouette at sway -1
+PASS: Mouse follows tail silhouette at sway 1
+PASS: 30-second idle sequence includes blinks, single-ear twitches, tail movement and pauses
+PASS: Tail moves continuously without a jump
+PASS: Petting produces a slow blink and returns to open eyes
+PASS: Repeated petting does not snap closed eyes open
+PASS: Rendered 90 WPF motion frames, including petting and idle actions
+INFO: Mesh vertices = 6000; 90 offscreen frames = 2.27 seconds (not an on-screen FPS measurement)
+PASS: Live WPF timer drives motion updates
+PASS: Petting reaches the animated view through the live timer
 PASS: Rendered actual WPF pet view to pet-preview.png
 Not covered: physical mouse input, Windows tray clicks, other Windows computers, mixed-DPI monitors.

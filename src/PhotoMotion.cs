@@ -1,0 +1,247 @@
+using System;
+using System.Collections.Generic;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Media.Media3D;
+
+namespace PhotoCat
+{
+    // One continuous textured surface keeps the original fur and transparent silhouette.
+    // The landmarks below belong to assets/cat.png, a 953 x 1347 photograph cutout.
+    internal struct MotionPose
+    {
+        internal double Blink, LeftEar, RightEar, Tail, Breath;
+    }
+
+    internal sealed class PhotoMotion : FrameworkElement
+    {
+        private readonly Viewport3D viewport = new Viewport3D();
+        private readonly MeshGeometry3D mesh = new MeshGeometry3D();
+        private readonly List<Point> rest = new List<Point>();
+        private BitmapSource source;
+        private MotionPose pose;
+        internal MotionPose Pose { get { return pose; } }
+        internal int VertexCount { get { return rest.Count; } }
+
+        internal PhotoMotion()
+        {
+            AddVisualChild(viewport);
+            AddLogicalChild(viewport);
+            viewport.IsHitTestVisible = false;
+            viewport.ClipToBounds = false;
+        }
+
+        internal void SetPhoto(BitmapSource bitmap)
+        {
+            source = bitmap;
+            double width = bitmap.PixelWidth, height = bitmap.PixelHeight;
+            viewport.Camera = new OrthographicCamera(new Point3D(width / 2, -height / 2, 2000),
+                new Vector3D(0, 0, -1), new Vector3D(0, 1, 0), width);
+            List<double> xs = Grid(width, 28, 410, 584, 4);
+            List<double> ys = Grid(height, 28, 192, 268, 3);
+            PointCollection uv = new PointCollection();
+            Point3DCollection positions = new Point3DCollection();
+            Int32Collection triangles = new Int32Collection();
+            foreach (double y in ys)
+                foreach (double x in xs)
+                {
+                    rest.Add(new Point(x, y));
+                    positions.Add(new Point3D(x, -y, 0));
+                    uv.Add(new Point(x / width, y / height));
+                }
+            for (int row = 0; row < ys.Count - 1; row++)
+                for (int col = 0; col < xs.Count - 1; col++)
+                {
+                    int a = row * xs.Count + col, b = a + xs.Count;
+                    triangles.Add(a); triangles.Add(b); triangles.Add(a + 1);
+                    triangles.Add(a + 1); triangles.Add(b); triangles.Add(b + 1);
+                }
+            uv.Freeze(); triangles.Freeze();
+            mesh.TextureCoordinates = uv;
+            mesh.TriangleIndices = triangles;
+            mesh.Positions = positions;
+            ImageBrush photo = new ImageBrush(bitmap) { ViewportUnits = BrushMappingMode.Absolute,
+                Viewport = new Rect(0, 0, 1, 1), TileMode = TileMode.None };
+            photo.Freeze();
+            DiffuseMaterial material = new DiffuseMaterial(photo);
+            material.Freeze();
+            viewport.Children.Add(new ModelVisual3D { Content = new AmbientLight(Colors.White) });
+            viewport.Children.Add(new ModelVisual3D { Content = new GeometryModel3D(mesh, material) { BackMaterial = material } });
+            SetPose(new MotionPose());
+        }
+
+        private static List<double> Grid(double end, int step, int detailStart, int detailEnd, int detailStep)
+        {
+            SortedSet<double> values = new SortedSet<double>();
+            for (int value = 0; value < end; value += step) values.Add(value);
+            for (int value = detailStart; value <= detailEnd; value += detailStep) values.Add(value);
+            values.Add(end);
+            return new List<double>(values);
+        }
+
+        internal void SetPose(MotionPose value)
+        {
+            pose = value;
+            Point3DCollection positions = new Point3DCollection(rest.Count);
+            foreach (Point point in rest)
+            {
+                Point moved = Map(point, value);
+                positions.Add(new Point3D(moved.X, -moved.Y, 0));
+            }
+            positions.Freeze();
+            mesh.Positions = positions;
+        }
+
+        private static double Smooth(double value)
+        {
+            double t = Math.Max(0, Math.Min(1, value));
+            return t * t * (3 - 2 * t);
+        }
+
+        private static double Falloff(double value, double inner, double outer)
+        {
+            return 1 - Smooth((Math.Abs(value) - inner) / (outer - inner));
+        }
+
+        internal static Point Map(Point point, MotionPose value)
+        {
+            double x = point.X, y = point.Y;
+            double dx = 0, dy = 0;
+            // Chest expansion stays above the paws; neither the head nor the whole photo bobs.
+            double chest = Falloff(x - 440, 60, 340) * Falloff(y - 560, 30, 210);
+            dx += (x - 440) * 0.012 * chest * value.Breath;
+            dy -= 1.5 * chest * value.Breath;
+            // Only the isolated end of this curled tail moves. Its root and both paws stay still.
+            double tail = Smooth((y - 1020) / 235) * Falloff(x - 300, 150, 280)
+                * (1 - Smooth((y - 1300) / 47));
+            dx += 24 * tail * value.Tail;
+            dy += 9 * tail * value.Tail;
+            Ear(x, y, 397, 168, value.LeftEar, ref dx, ref dy);
+            Ear(x, y, 605, 174, -value.RightEar, ref dx, ref dy);
+            // Closing the eye compresses its iris into the lid line and draws adjacent fur over it.
+            dy += Eye(x, y, 444, 230, 0.43, value.Blink);
+            dy += Eye(x, y, 550, 233, -0.34, value.Blink);
+            return new Point(x + dx, y + dy);
+        }
+
+        private static void Ear(double x, double y, double rootX, double rootY,
+            double amount, ref double dx, ref double dy)
+        {
+            if (amount == 0 || y >= rootY || Math.Abs(x - rootX) >= 105) return;
+            double weight = Smooth((rootY - y) / 100) * Smooth(y / 45)
+                * Falloff(x - rootX, 35, 105);
+            double angle = 0.065 * amount * weight;
+            double px = x - rootX, py = y - rootY;
+            dx += px * (Math.Cos(angle) - 1) - py * Math.Sin(angle);
+            dy += px * Math.Sin(angle) + py * (Math.Cos(angle) - 1);
+        }
+
+        private static double Eye(double x, double y, double cx, double cy, double slope, double blink)
+        {
+            if (blink == 0 || Math.Abs(x - cx) >= 47) return 0;
+            double horizontal = Falloff(x - cx, 28, 47);
+            double offset = y - (cy + slope * (x - cx));
+            if (Math.Abs(offset) >= 57) return 0;
+            double vertical = Falloff(offset, 20, 57);
+            double arc = 3 * Math.Max(0, 1 - Math.Pow((x - cx) / 30, 2));
+            double lidShift = 5 + arc - slope * 0.45 * (x - cx);
+            return (lidShift - offset * 0.91) * horizontal * vertical * blink;
+        }
+
+        // Invert the actual triangle under the cursor, including a moving transparent tail edge.
+        internal Point SourcePoint(Point local)
+        {
+            if (source == null || ActualWidth <= 0 || ActualHeight <= 0) return new Point(-1, -1);
+            if (local.X < 0 || local.Y < 0 || local.X >= ActualWidth || local.Y >= ActualHeight)
+                return new Point(-1, -1);
+            Point target = new Point(local.X * source.PixelWidth / ActualWidth,
+                local.Y * source.PixelHeight / ActualHeight);
+            Int32Collection indices = mesh.TriangleIndices;
+            Point3DCollection positions = mesh.Positions;
+            for (int i = 0; i < indices.Count; i += 3)
+            {
+                int ia = indices[i], ib = indices[i + 1], ic = indices[i + 2];
+                Point a = Flat(positions[ia]), b = Flat(positions[ib]), c = Flat(positions[ic]);
+                if (target.X < Math.Min(a.X, Math.Min(b.X, c.X)) || target.X > Math.Max(a.X, Math.Max(b.X, c.X))
+                    || target.Y < Math.Min(a.Y, Math.Min(b.Y, c.Y)) || target.Y > Math.Max(a.Y, Math.Max(b.Y, c.Y))) continue;
+                double determinant = Cross(b - a, c - a);
+                double u = Cross(target - a, c - a) / determinant;
+                double v = Cross(b - a, target - a) / determinant;
+                if (u < -1e-8 || v < -1e-8 || u + v > 1 + 1e-8) continue;
+                return rest[ia] + (rest[ib] - rest[ia]) * u + (rest[ic] - rest[ia]) * v;
+            }
+            return new Point(-1, -1);
+        }
+
+        private static Point Flat(Point3D point) { return new Point(point.X, -point.Y); }
+        private static double Cross(Vector a, Vector b) { return a.X * b.Y - a.Y * b.X; }
+
+        internal bool HasValidSurface()
+        {
+            Int32Collection indices = mesh.TriangleIndices;
+            for (int i = 0; i < indices.Count; i += 3)
+            {
+                Point a = Flat(mesh.Positions[indices[i]]), b = Flat(mesh.Positions[indices[i + 1]]),
+                    c = Flat(mesh.Positions[indices[i + 2]]);
+                // Source triangles face clockwise in screen coordinates; no folding or collapsed faces.
+                if (Cross(b - a, c - a) >= -0.0001) return false;
+            }
+            return true;
+        }
+
+        protected override int VisualChildrenCount { get { return 1; } }
+        protected override Visual GetVisualChild(int index)
+        {
+            if (index != 0) throw new ArgumentOutOfRangeException("index");
+            return viewport;
+        }
+        protected override Size MeasureOverride(Size availableSize) { viewport.Measure(availableSize); return viewport.DesiredSize; }
+        protected override Size ArrangeOverride(Size finalSize) { viewport.Arrange(new Rect(finalSize)); return finalSize; }
+        protected override void OnRender(DrawingContext dc) { dc.DrawRectangle(Brushes.Transparent, null, new Rect(RenderSize)); }
+    }
+
+    // Motion time advances only while visible and unpaused. Each gesture returns smoothly to rest.
+    internal sealed class PetMotion
+    {
+        private readonly Random random;
+        private double time, nextBlink, nextEar, nextTail;
+        private double blinkAt = -10, earAt = -10, tailAt = -10, petAt = -10;
+        private bool leftEar;
+        internal PetMotion(int seed)
+        {
+            random = new Random(seed);
+            nextBlink = 1.8; nextEar = 4; nextTail = 1;
+        }
+        internal void Pet()
+        {
+            // Repeated clicks finish the current slow blink instead of snapping the eyes open.
+            if (time - petAt >= 1.5) petAt = time;
+        }
+        internal MotionPose Advance(double seconds)
+        {
+            time += Math.Max(0, Math.Min(seconds, 0.1));
+            if (time >= nextBlink) { blinkAt = time; nextBlink = time + 3.5 + random.NextDouble() * 4; }
+            if (time >= nextEar) { earAt = time; leftEar = random.Next(2) == 0; nextEar = time + 8 + random.NextDouble() * 9; }
+            if (time >= nextTail) { tailAt = time; nextTail = time + 8 + random.NextDouble() * 7; }
+            double twitch = Pulse(time - earAt, 0.12, 0.04, 0.35);
+            double tailTime = time - tailAt;
+            double tail = tailTime >= 0 && tailTime < 3.8
+                ? Math.Sin(tailTime / 3.8 * Math.PI) * Math.Sin(tailTime / 3.8 * Math.PI * 2) : 0;
+            return new MotionPose {
+                Blink = Math.Max(Pulse(time - blinkAt, 0.10, 0.04, 0.18),
+                    0.94 * Pulse(time - petAt, 0.42, 0.36, 0.72)),
+                LeftEar = leftEar ? twitch : 0, RightEar = leftEar ? 0 : twitch,
+                Tail = tail, Breath = Math.Sin(time * Math.PI * 2 / 4.6)
+            };
+        }
+        private static double Pulse(double elapsed, double close, double hold, double open)
+        {
+            if (elapsed < 0 || elapsed >= close + hold + open) return 0;
+            double t = elapsed < close ? elapsed / close : elapsed < close + hold ? 1
+                : 1 - (elapsed - close - hold) / open;
+            return t * t * (3 - 2 * t);
+        }
+    }
+}

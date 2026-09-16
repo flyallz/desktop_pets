@@ -11,6 +11,7 @@ $arguments = @('/nologo', '/target:winexe', '/platform:x64', '/optimize+', '/cod
 foreach ($reference in $references) { $arguments += '/reference:' + (Join-Path $framework $reference) }
 $arguments += '/win32icon:' + (Join-Path $sampleRoot 'assets\cat.ico')
 $arguments += Join-Path $sampleRoot 'src\CatPet.cs'
+$arguments += Join-Path $sampleRoot 'src\PhotoMotion.cs'
 & $compiler @arguments
 if ($LASTEXITCODE -ne 0) { throw 'Build failed.' }
 Write-Output (Join-Path $output '猫咪桌宠.exe')
