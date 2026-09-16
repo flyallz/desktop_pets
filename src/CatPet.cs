@@ -95,6 +95,7 @@ namespace PhotoCat
         private int petCount;
         private int walkingDirection = -1;
         private double walkingRemainder;
+        private int pendingWalkingDirection;
 
         public PetWindow(bool selfTest)
         {
@@ -237,7 +238,7 @@ namespace PhotoCat
             if (animate && !moving && !menuOpen)
             {
                 MotionPose pose = motion.Advance(delta);
-                if (pose.Posture == CatPosture.Walk)
+                if (pose.Posture == CatPosture.Walk || motion.WalkDistance > 0)
                 {
                     if (!testing)
                     {
@@ -246,8 +247,9 @@ namespace PhotoCat
                         {
                             walkingDirection = Left + Width / 2 > area.Left + area.Width / 2 ? -1 : 1;
                             walkingRemainder = 0;
+                            pendingWalkingDirection = 0;
                         }
-                        AdvanceWalkingPosition(area, delta);
+                        AdvanceWalkingPosition(area, motion.WalkDistance);
                         pose = motion.Advance(0);
                     }
                     pose.FaceLeft = walkingDirection < 0;
@@ -322,6 +324,7 @@ namespace PhotoCat
         private void WalkPet()
         {
             animate = true;
+            if (motion.Activity != CatActivity.Walking) pendingWalkingDirection = 0;
             motion.Walk();
             lastTick = clock.Elapsed.TotalSeconds;
             Tick();
@@ -343,19 +346,27 @@ namespace PhotoCat
             return new Rect(new Point(Left + a.X, Top + a.Y), new Point(Left + b.X, Top + b.Y));
         }
 
-        private void AdvanceWalkingPosition(Rect area, double seconds)
+        private void AdvanceWalkingPosition(Rect area, double sourceDistance)
         {
             double minimum = area.Left + 8, maximum = area.Right - Width - 8;
             if (maximum <= minimum)
             {
                 motion.StopWalking();
+                pendingWalkingDirection = 0;
                 return;
             }
-            double distance = Math.Max(0, Math.Min(seconds, 0.1))
-                * PetMotion.WalkStridePixels / PetMotion.WalkCycleSeconds * petSize / 953;
-            double target = Left + walkingDirection * distance + walkingRemainder;
-            if (target <= minimum) { target = minimum; walkingDirection = 1; }
-            if (target >= maximum) { target = maximum; walkingDirection = -1; }
+            if (pendingWalkingDirection != 0)
+            {
+                if (motion.IsTurning) return;
+                walkingDirection = pendingWalkingDirection;
+                pendingWalkingDirection = 0;
+                walkingRemainder = 0;
+            }
+            if (sourceDistance <= 0) return;
+            double target = Left + walkingDirection * sourceDistance * petSize / 953 + walkingRemainder;
+            if (target <= minimum) { target = minimum; pendingWalkingDirection = 1; }
+            if (target >= maximum) { target = maximum; pendingWalkingDirection = -1; }
+            if (pendingWalkingDirection != 0) motion.PauseForTurn();
             Left = target;
             // Windows rounds a top-level window to device pixels; retain the fraction for the next step.
             walkingRemainder = target - Left;
@@ -904,7 +915,7 @@ namespace PhotoCat
             PetMotion behavior = new PetMotion(42);
             behavior.Walk();
             int previous = 0, changes = 0;
-            for (int i = 0; i < 56; i++)
+            for (int i = 0; i < 65; i++)
             {
                 int frame = behavior.Advance(0.04).WalkFrame;
                 if (frame != previous)
@@ -914,6 +925,37 @@ namespace PhotoCat
                 }
             }
             Check(changes >= 15, "Walking cycles through all eight frames in order and loops", checks);
+            double referenceDistance = 0;
+            foreach (double step in new double[] { 0.04, 0.1 })
+            {
+                behavior = new PetMotion(42); behavior.SetAutomatic(false); behavior.Walk();
+                double total = 0, peak = 0, first = 0, lastStep = 0;
+                int ticks = 0;
+                while (behavior.Activity == CatActivity.Walking && ticks < 250)
+                {
+                    behavior.Advance(step); double distance = behavior.WalkDistance;
+                    if (ticks++ == 0) first = distance;
+                    total += distance; peak = Math.Max(peak, distance); lastStep = distance;
+                }
+                Check(ticks < 250 && first < peak * 0.1 && lastStep < peak * 0.1,
+                    "Walking eases into motion and slows before stopping at timestep " + step, checks);
+                Check(Math.Abs(total / PetMotion.WalkStridePixels - Math.Round(total / PetMotion.WalkStridePixels)) < 0.00001,
+                    "Walking finishes a whole number of gait cycles at timestep " + step, checks);
+                if (referenceDistance == 0) referenceDistance = total;
+                else Check(Math.Abs(total - referenceDistance) < 0.00001,
+                    "Different timer intervals produce the same complete walking distance", checks);
+            }
+            behavior = new PetMotion(42); behavior.Walk();
+            for (int i = 0; i < 30; i++) behavior.Advance(0.04);
+            int frozenFrame = behavior.Advance(0).WalkFrame;
+            behavior.PauseForTurn();
+            bool held = true;
+            for (int i = 0; i < 8; i++) held &= behavior.Advance(0.04).WalkFrame == frozenFrame && behavior.WalkDistance == 0;
+            Check(held, "An edge turn holds the gait and travels no distance during its brief pause", checks);
+            while (behavior.IsTurning) behavior.Advance(0.04);
+            behavior.Advance(0.04);
+            Check(behavior.WalkDistance > 0 && behavior.WalkDistance < PetMotion.WalkStridePixels / PetMotion.WalkCycleSeconds * 0.04 * 0.1,
+                "Walking restarts gradually after turning", checks);
             behavior = new PetMotion(21);
             bool sawWalk = false, sawStretch = false, sawSleep = false, sawWake = false, returned = false;
             double firstWalk = 0;
@@ -953,16 +995,29 @@ namespace PhotoCat
             Rect area = new Rect(-12000, -11000, 1400, 1200);
             Left = -11500; Top = -10800; walkingDirection = 1; walkingRemainder = 0;
             double origin = Left, level = Top;
-            for (int i = 0; i < 28; i++) AdvanceWalkingPosition(area, 0.04);
+            pendingWalkingDirection = 0;
+            for (int i = 0; i < 28; i++) AdvanceWalkingPosition(area, PetMotion.WalkStridePixels / PetMotion.WalkCycleSeconds * 0.04);
             File.WriteAllText(Path.Combine(folder, "travel.txt"), "actual=" + (Left - origin) + "; expected=" + (PetMotion.WalkStridePixels * petSize / 953) + "; top=" + Top + "; level=" + level);
             Check(Math.Abs(Left - origin - PetMotion.WalkStridePixels * petSize / 953) < 1 && Top == level,
                 "One gait cycle travels the scaled stride distance without vertical drift", checks);
-            Left = area.Right - Width - 8; walkingDirection = 1;
-            AdvanceWalkingPosition(area, 0.04);
-            Check(walkingDirection == -1 && Left <= area.Right - Width - 8, "Right edge turns the cat left inside the work area", checks);
-            Left = area.Left + 8; walkingDirection = -1;
-            AdvanceWalkingPosition(area, 0.04);
-            Check(walkingDirection == 1 && Left >= area.Left + 8, "Left edge turns the cat right on a negative-coordinate monitor", checks);
+            foreach (int direction in new int[] { 1, -1 })
+            {
+                motion.StopWalking(); motion.Walk();
+                Left = direction == 1 ? area.Right - Width - 8 : area.Left + 8;
+                walkingDirection = direction; pendingWalkingDirection = 0;
+                AdvanceWalkingPosition(area, 4);
+                double stoppedAt = Left;
+                Check(motion.IsTurning && walkingDirection == direction,
+                    "An edge pauses before changing direction: " + direction, checks);
+                for (int i = 0; i < 3; i++) { motion.Advance(0.1); AdvanceWalkingPosition(area, motion.WalkDistance); }
+                Check(Left == stoppedAt && walkingDirection == direction,
+                    "The pet stays still during its edge pause: " + direction, checks);
+                motion.Advance(0.1); AdvanceWalkingPosition(area, motion.WalkDistance);
+                Check(walkingDirection == -direction && Left >= area.Left + 8 && Left <= area.Right - Width - 8,
+                    "The pet turns inward inside a negative-coordinate work area: " + direction, checks);
+                motion.Advance(0.1); AdvanceWalkingPosition(area, motion.WalkDistance);
+                Check((Left - stoppedAt) * direction <= 0, "The first resumed step heads away from the edge: " + direction, checks);
+            }
             motion.Walk(); AdvanceWalkingPosition(new Rect(-12000, -11000, 300, 1200), 0.04);
             Check(motion.Activity == CatActivity.Companion, "A work area too narrow for walking leaves the pet stationary", checks);
             WalkPet(); timer.Stop();

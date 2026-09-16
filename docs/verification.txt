@@ -30,7 +30,7 @@ PASS: Tail moves continuously without a jump
 PASS: Petting produces a slow blink and returns to open eyes
 PASS: Repeated petting does not snap closed eyes open
 PASS: Rendered 90 WPF motion frames, including petting and idle actions
-INFO: Mesh vertices = 6000; 90 offscreen frames = 2.23 seconds (not an on-screen FPS measurement)
+INFO: Mesh vertices = 6000; 90 offscreen frames = 2.48 seconds (not an on-screen FPS measurement)
 PASS: Live WPF timer drives motion updates
 PASS: Petting reaches the animated view through the live timer
 PASS: New posture surface remains intact: stretch-start
@@ -64,6 +64,13 @@ PASS: Walking frame 5 renders in both directions with matching transparent mouse
 PASS: Walking frame 6 renders in both directions with matching transparent mouse regions
 PASS: Walking frame 7 renders in both directions with matching transparent mouse regions
 PASS: Walking cycles through all eight frames in order and loops
+PASS: Walking eases into motion and slows before stopping at timestep 0.04
+PASS: Walking finishes a whole number of gait cycles at timestep 0.04
+PASS: Walking eases into motion and slows before stopping at timestep 0.1
+PASS: Walking finishes a whole number of gait cycles at timestep 0.1
+PASS: Different timer intervals produce the same complete walking distance
+PASS: An edge turn holds the gait and travels no distance during its brief pause
+PASS: Walking restarts gradually after turning
 PASS: Default startup begins walking after about six seconds without user input
 PASS: Default routine visits walking, sitting, stretching, sleeping and waking within 100 simulated seconds
 PASS: Disabling automatic actions keeps the pet in place for six simulated minutes
@@ -74,8 +81,14 @@ PASS: A manual walk finishes by itself
 PASS: Petting stops walking
 PASS: Finishing a drag stops walking
 PASS: One gait cycle travels the scaled stride distance without vertical drift
-PASS: Right edge turns the cat left inside the work area
-PASS: Left edge turns the cat right on a negative-coordinate monitor
+PASS: An edge pauses before changing direction: 1
+PASS: The pet stays still during its edge pause: 1
+PASS: The pet turns inward inside a negative-coordinate work area: 1
+PASS: The first resumed step heads away from the edge: 1
+PASS: An edge pauses before changing direction: -1
+PASS: The pet stays still during its edge pause: -1
+PASS: The pet turns inward inside a negative-coordinate work area: -1
+PASS: The first resumed step heads away from the edge: -1
 PASS: A work area too narrow for walking leaves the pet stationary
 PASS: Walk menu action reaches the pet view
 PASS: Pause freezes gait and travel

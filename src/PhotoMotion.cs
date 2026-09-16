@@ -309,9 +309,13 @@ namespace PhotoCat
     {
         internal const double WalkCycleSeconds = 1.12;
         internal const double WalkStridePixels = 110;
+        private const double WalkRampSeconds = 0.56;
         private readonly Random random;
         private readonly Queue<CatActivity> routine = new Queue<CatActivity>();
         private double time, nextBlink, nextEar, nextTail, nextActivity = 6, walkDuration;
+        private double walkingTime, turnPause, resumeTime;
+        internal double WalkDistance { get; private set; }
+        internal bool IsTurning { get { return Activity == CatActivity.Walking && turnPause > 0; } }
         private double blinkAt = -10, earAt = -10, tailAt = -10, petAt = -10, activityAt, wakingEyes = 1, settlingEyes;
         private bool leftEar, manualSleep;
         private CatActivity lastAutomatic;
@@ -345,7 +349,28 @@ namespace PhotoCat
             if (Activity == CatActivity.Walking) return;
             Activity = CatActivity.Walking;
             activityAt = time;
-            walkDuration = 5 + random.NextDouble() * 3;
+            walkDuration = random.Next(4, 7) * WalkCycleSeconds + WalkRampSeconds;
+            walkingTime = 0; turnPause = 0; resumeTime = WalkRampSeconds;
+        }
+        internal void PauseForTurn()
+        {
+            if (Activity != CatActivity.Walking) return;
+            turnPause = 0.32;
+            resumeTime = 0;
+        }
+        // Integral of the speed curve: the same progress drives both gait and desktop travel.
+        private double WalkingProgress(double elapsed)
+        {
+            double t = Math.Max(0, Math.Min(walkDuration, elapsed));
+            if (t < WalkRampSeconds) return RampDistance(t);
+            if (t > walkDuration - WalkRampSeconds)
+                return walkDuration - WalkRampSeconds - RampDistance(walkDuration - t);
+            return t - WalkRampSeconds / 2;
+        }
+        private static double RampDistance(double seconds)
+        {
+            double t = seconds / WalkRampSeconds;
+            return WalkRampSeconds * (t * t * t - t * t * t * t / 2);
         }
         internal void StopWalking()
         {
@@ -405,17 +430,30 @@ namespace PhotoCat
         }
         internal MotionPose Advance(double seconds)
         {
-            time += Math.Max(0, Math.Min(seconds, 0.1));
+            double delta = Math.Max(0, Math.Min(seconds, 0.1));
+            time += delta;
+            WalkDistance = 0;
+            if (Activity == CatActivity.Walking)
+            {
+                if (IsTurning) turnPause = Math.Max(0, turnPause - delta);
+                else
+                {
+                    double before = WalkingProgress(walkingTime);
+                    resumeTime = Math.Min(WalkRampSeconds, resumeTime + delta);
+                    walkingTime = Math.Min(walkDuration, walkingTime + delta * Smooth(resumeTime / WalkRampSeconds));
+                    WalkDistance = (WalkingProgress(walkingTime) - before) * WalkStridePixels / WalkCycleSeconds;
+                    if (walkingTime >= walkDuration) FinishActivity();
+                }
+            }
             double elapsed = time - activityAt;
-            if ((Activity == CatActivity.Stretching && elapsed >= 3.2)
-                || (Activity == CatActivity.Walking && elapsed >= walkDuration)) FinishActivity();
+            if (Activity == CatActivity.Stretching && elapsed >= 3.2) FinishActivity();
             if (Activity == CatActivity.Sleeping && !manualSleep && elapsed >= 32) Wake();
             if (Activity == CatActivity.Waking && time - activityAt >= 1.4) Stretch();
             if (Activity == CatActivity.Companion && Automatic && time >= nextActivity) ChooseActivity();
             elapsed = time - activityAt;
             if (Activity == CatActivity.Walking)
                 return new MotionPose { Posture = CatPosture.Walk,
-                    WalkFrame = (int)(elapsed / WalkCycleSeconds * 8) % 8 };
+                    WalkFrame = (int)(WalkingProgress(walkingTime) / WalkCycleSeconds * 8) % 8 };
             if (Activity == CatActivity.Stretching)
                 return new MotionPose { Posture = CatPosture.Stretch, Effort = Math.Sin(elapsed / 3.2 * Math.PI),
                     Breath = Math.Sin(time * Math.PI * 2 / 4.6) };
