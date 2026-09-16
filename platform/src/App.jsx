@@ -193,7 +193,7 @@ export default function App() {
       <section id="take-home" className="take-home">
         <div><h2>{exported?'宠物包已准备好，下一站是桌面。':'做好以后，把陪伴带走。'}</h2><p>一份宠物包，保留照片、动作和你的设置。Windows、Mac 使用同一份文件。</p></div>
         <ol><li><strong>保存宠物包</strong><span>文件留在自己手里，随时重新编辑。</span></li><li><strong>安装桌面客户端</strong><span>Windows 与 Mac M / Intel 共用这一套动作。</span></li><li><strong>导入，开始陪伴</strong><span>在客户端右键猫咪，选择“导入宠物包”。</span></li></ol>
-        <div className="download-row"><p>跨平台安装包正在验证，暂未开放正式下载。Mac 尚未签名。</p><a className="text-link" href="https://github.com/flyallz/desktop_pets/actions/workflows/platform-build.yml" target="_blank" rel="noreferrer">查看客户端构建 <Icon name="arrow"/></a></div>
+        <div className="download-row"><p>已提供 Windows 与 Mac 内测包。Mac 支持 M / Intel，需 macOS 13+，尚未签名。</p><a className="text-link" href="https://github.com/flyallz/desktop_pets/releases" target="_blank" rel="noreferrer">下载内测客户端 <Icon name="arrow"/></a></div>
       </section>
     </main>
     <footer className="site-footer"><span>桌宠工坊 · 从一张自己的照片开始</span><span>本地制作内测 · 暂未接入付费和在线生成</span></footer>

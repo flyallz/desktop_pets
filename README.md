@@ -2,7 +2,7 @@
 
 给我的好闺闺的桌宠。
 
-新增 **桌宠工坊跨平台内测**：在 [platform/](platform/README.md) 中用照片制作、预览并保存自己的宠物包。网站与 Windows / Mac M 系列 / Mac Intel 客户端共用动作和文件格式。[构建进度与测试附件](https://github.com/flyallz/desktop_pets/actions/workflows/platform-build.yml) · [后续产品路线](docs/product-roadmap.md)。
+新增 **桌宠工坊跨平台内测**：在 [platform/](platform/README.md) 中用照片制作、预览并保存自己的宠物包。网站与 Windows / Mac M 系列 / Mac Intel 客户端共用动作和文件格式。[v0.5 内测下载](https://github.com/flyallz/desktop_pets/releases/tag/v0.5.0-beta.1) · [跨平台检查](https://github.com/flyallz/desktop_pets/actions/workflows/platform-build.yml) · [后续产品路线](docs/product-roadmap.md)。
 
 下文保留原来的 Windows v0.4.1 独立样品说明，该样品不能导入新版宠物包。
 
