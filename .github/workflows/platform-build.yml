@@ -1,0 +1,70 @@
+name: Desktop Pets platform
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['platform/**', '.github/workflows/platform-build.yml']
+  pull_request:
+    paths: ['platform/**', '.github/workflows/platform-build.yml']
+permissions:
+  contents: read
+concurrency:
+  group: platform-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    name: ${{ matrix.label }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            label: Windows x64
+            package: win
+          - os: macos-15
+            label: Mac Apple Silicon and Universal
+            package: mac
+          - os: macos-15-intel
+            label: Mac Intel smoke test
+            package: none
+    defaults:
+      run:
+        working-directory: platform
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: platform/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - name: Native startup smoke test
+        run: npx electron . --smoke-test
+      - if: matrix.package == 'win'
+        run: npm run pack:win
+      - if: matrix.package == 'mac'
+        run: npm run pack:mac
+      - if: matrix.package == 'mac'
+        name: Check both Mac binary architectures
+        run: lipo -archs "release/mac-universal/Desktop Pets Beta.app/Contents/MacOS/Desktop Pets Beta" | tee universal-architectures.txt
+      - uses: actions/upload-artifact@v7.0.1
+        with:
+          name: desktop-pets-${{ matrix.os }}
+          path: |
+            platform/release/*.zip
+            platform/electron-smoke.json
+            platform/universal-architectures.txt
+          if-no-files-found: error
+          retention-days: 14
+      - if: matrix.package == 'win'
+        uses: actions/upload-artifact@v7.0.1
+        with:
+          name: desktop-pets-website
+          path: platform/dist
+          retention-days: 14

@@ -2,6 +2,10 @@
 
 给我的好闺闺的桌宠。
 
+新增 **桌宠工坊跨平台内测**：在 [platform/](platform/README.md) 中用照片制作、预览并保存自己的宠物包。网站与 Windows / Mac M 系列 / Mac Intel 客户端共用动作和文件格式。[构建进度与测试附件](https://github.com/flyallz/desktop_pets/actions/workflows/platform-build.yml) · [后续产品路线](docs/product-roadmap.md)。
+
+下文保留原来的 Windows v0.4.1 独立样品说明，该样品不能导入新版宠物包。
+
 Windows 桌面猫咪陪伴样品：默认会自己在桌面走动、坐着陪伴、伸懒腰和打盹。保留原照坐姿，坐着时会眨眼、轻动耳朵、摆动尾尖；睡觉时有缓慢呼吸，轻点会醒来并伸个懒腰。
 
 当前版本：v0.4.1。新姿态由内置图像工具参考这只猫生成，再在本机清理背景；它们是照片衍生素材。

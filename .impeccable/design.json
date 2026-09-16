@@ -1,0 +1,368 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-16T12:05:36.172825+00:00",
+  "title": "Design System: 桌宠工坊",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "松绿",
+        "tonalRamp": [
+          "oklch(15% 0.0441 186.64)",
+          "oklch(26% 0.0441 186.64)",
+          "oklch(37% 0.0441 186.64)",
+          "oklch(49% 0.0441 186.64)",
+          "oklch(61% 0.0441 186.64)",
+          "oklch(73% 0.0441 186.64)",
+          "oklch(85% 0.0441 186.64)",
+          "oklch(95% 0.0441 186.64)"
+        ]
+      },
+      "primary-hover": {
+        "role": "primary",
+        "displayName": "深松绿",
+        "tonalRamp": [
+          "oklch(15% 0.0395 185.11)",
+          "oklch(26% 0.0395 185.11)",
+          "oklch(37% 0.0395 185.11)",
+          "oklch(49% 0.0395 185.11)",
+          "oklch(61% 0.0395 185.11)",
+          "oklch(73% 0.0395 185.11)",
+          "oklch(85% 0.0395 185.11)",
+          "oklch(95% 0.0395 185.11)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "深墨色",
+        "tonalRamp": [
+          "oklch(15% 0.0217 205.78)",
+          "oklch(26% 0.0217 205.78)",
+          "oklch(37% 0.0217 205.78)",
+          "oklch(49% 0.0217 205.78)",
+          "oklch(61% 0.0217 205.78)",
+          "oklch(73% 0.0217 205.78)",
+          "oklch(85% 0.0217 205.78)",
+          "oklch(95% 0.0217 205.78)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "灰绿文字",
+        "tonalRamp": [
+          "oklch(15% 0.0205 196.52)",
+          "oklch(26% 0.0205 196.52)",
+          "oklch(37% 0.0205 196.52)",
+          "oklch(49% 0.0205 196.52)",
+          "oklch(61% 0.0205 196.52)",
+          "oklch(73% 0.0205 196.52)",
+          "oklch(85% 0.0205 196.52)",
+          "oklch(95% 0.0205 196.52)"
+        ]
+      },
+      "page": {
+        "role": "neutral",
+        "displayName": "浅冷灰页面",
+        "tonalRamp": [
+          "oklch(15% 0.0021 197.12)",
+          "oklch(26% 0.0021 197.12)",
+          "oklch(37% 0.0021 197.12)",
+          "oklch(49% 0.0021 197.12)",
+          "oklch(61% 0.0021 197.12)",
+          "oklch(73% 0.0021 197.12)",
+          "oklch(85% 0.0021 197.12)",
+          "oklch(95% 0.0021 197.12)"
+        ]
+      },
+      "white": {
+        "role": "neutral",
+        "displayName": "白色工具面",
+        "tonalRamp": [
+          "oklch(15% 0.0000 0.00)",
+          "oklch(26% 0.0000 0.00)",
+          "oklch(37% 0.0000 0.00)",
+          "oklch(49% 0.0000 0.00)",
+          "oklch(61% 0.0000 0.00)",
+          "oklch(73% 0.0000 0.00)",
+          "oklch(85% 0.0000 0.00)",
+          "oklch(95% 0.0000 0.00)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "雾灰展台",
+        "tonalRamp": [
+          "oklch(15% 0.0035 219.53)",
+          "oklch(26% 0.0035 219.53)",
+          "oklch(37% 0.0035 219.53)",
+          "oklch(49% 0.0035 219.53)",
+          "oklch(61% 0.0035 219.53)",
+          "oklch(73% 0.0035 219.53)",
+          "oklch(85% 0.0035 219.53)",
+          "oklch(95% 0.0035 219.53)"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "区域分隔线",
+        "tonalRamp": [
+          "oklch(15% 0.0065 197.04)",
+          "oklch(26% 0.0065 197.04)",
+          "oklch(37% 0.0065 197.04)",
+          "oklch(49% 0.0065 197.04)",
+          "oklch(61% 0.0065 197.04)",
+          "oklch(73% 0.0065 197.04)",
+          "oklch(85% 0.0065 197.04)",
+          "oklch(95% 0.0065 197.04)"
+        ]
+      },
+      "control-line": {
+        "role": "neutral",
+        "displayName": "控件边线",
+        "tonalRamp": [
+          "oklch(15% 0.0109 189.79)",
+          "oklch(26% 0.0109 189.79)",
+          "oklch(37% 0.0109 189.79)",
+          "oklch(49% 0.0109 189.79)",
+          "oklch(61% 0.0109 189.79)",
+          "oklch(73% 0.0109 189.79)",
+          "oklch(85% 0.0109 189.79)",
+          "oklch(95% 0.0109 189.79)"
+        ]
+      },
+      "field-line": {
+        "role": "neutral",
+        "displayName": "字段边线",
+        "tonalRamp": [
+          "oklch(15% 0.0121 170.22)",
+          "oklch(26% 0.0121 170.22)",
+          "oklch(37% 0.0121 170.22)",
+          "oklch(49% 0.0121 170.22)",
+          "oklch(61% 0.0121 170.22)",
+          "oklch(73% 0.0121 170.22)",
+          "oklch(85% 0.0121 170.22)",
+          "oklch(95% 0.0121 170.22)"
+        ]
+      },
+      "control-hover": {
+        "role": "neutral",
+        "displayName": "淡灰绿悬停",
+        "tonalRamp": [
+          "oklch(15% 0.0069 174.37)",
+          "oklch(26% 0.0069 174.37)",
+          "oklch(37% 0.0069 174.37)",
+          "oklch(49% 0.0069 174.37)",
+          "oklch(61% 0.0069 174.37)",
+          "oklch(73% 0.0069 174.37)",
+          "oklch(85% 0.0069 174.37)",
+          "oklch(95% 0.0069 174.37)"
+        ]
+      },
+      "focus": {
+        "role": "primary",
+        "displayName": "焦点绿",
+        "tonalRamp": [
+          "oklch(15% 0.0624 178.84)",
+          "oklch(26% 0.0624 178.84)",
+          "oklch(37% 0.0624 178.84)",
+          "oklch(49% 0.0624 178.84)",
+          "oklch(61% 0.0624 178.84)",
+          "oklch(73% 0.0624 178.84)",
+          "oklch(85% 0.0624 178.84)",
+          "oklch(95% 0.0624 178.84)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "宋体主标题",
+        "purpose": "品牌与当前页面主标题；当前字体文件为自托管子集。"
+      },
+      "brand": {
+        "displayName": "宋体品牌",
+        "purpose": "品牌文字；移动端缩至 16px。"
+      },
+      "title": {
+        "displayName": "工具区标题",
+        "purpose": "工作面中的二级操作标题。"
+      },
+      "body": {
+        "displayName": "正文",
+        "purpose": "页面说明与常规操作文字；按组件使用。"
+      },
+      "label": {
+        "displayName": "标签",
+        "purpose": "步骤、字段与动作名称。"
+      },
+      "helper": {
+        "displayName": "帮助说明",
+        "purpose": "紧邻相关操作，最大行长 70ch。"
+      }
+    },
+    "shadows": [
+      {
+        "name": "pet-bubble",
+        "value": "0 7px 22px #18282a13",
+        "purpose": "宠物的短暂消息浮于展台上。"
+      },
+      {
+        "name": "notice",
+        "value": "0 8px 30px #18282a24",
+        "purpose": "固定在页面下方的处理、完成和错误提示。"
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease",
+        "value": "cubic-bezier(.16,1,.3,1)",
+        "purpose": "按钮颜色和开关位移的共同缓动。"
+      },
+      {
+        "name": "control-color",
+        "value": "0.18s",
+        "purpose": "按钮背景及文字变化，不移动控件。"
+      },
+      {
+        "name": "toggle-shift",
+        "value": "0.16s",
+        "purpose": "开关滑块的位置变化。"
+      },
+      {
+        "name": "processing",
+        "value": "1.2s ease-in-out infinite",
+        "purpose": "真实处理中才出现的状态点淡入淡出。"
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "mobile-max",
+        "value": "760px"
+      },
+      {
+        "name": "compact-max",
+        "value": "1100px"
+      },
+      {
+        "name": "wide-min",
+        "value": "1500px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "保存按钮",
+      "kind": "button",
+      "description": "主要动作使用松绿底白字；控件保持静止。",
+      "html": "<button class=\"ds-primary\">保存宠物包</button>",
+      "css": ".ds-primary{font-family:\"PingFang SC\",\"Microsoft YaHei UI\",\"Microsoft YaHei\",sans-serif;font-size:13px;min-height:40px;padding:9px 13px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:background .18s var(--ease,cubic-bezier(.16,1,.3,1)),color .18s var(--ease,cubic-bezier(.16,1,.3,1));background:var(--green,#244a46);color:#fff;border:1px solid var(--green,#244a46)}.ds-primary:hover{background:#193a36}.ds-primary:focus-visible{outline:3px solid var(--focus,#548c80);outline-offset:3px}.ds-primary:disabled{cursor:not-allowed;opacity:.48}@media(prefers-reduced-motion:reduce){.ds-primary{transition:none}}",
+      "refersTo": "button-primary"
+    },
+    {
+      "name": "工具按钮",
+      "kind": "button",
+      "description": "白底细边的次要工具操作。",
+      "html": "<button class=\"ds-secondary\">画笔修整</button>",
+      "css": ".ds-secondary{font-family:\"PingFang SC\",\"Microsoft YaHei UI\",\"Microsoft YaHei\",sans-serif;font-size:13px;min-height:40px;padding:9px 13px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:background .18s var(--ease,cubic-bezier(.16,1,.3,1)),color .18s var(--ease,cubic-bezier(.16,1,.3,1));background:#fff;color:var(--ink,#18282a);border:1px solid #ccd6d5}.ds-secondary:hover{background:#e7edeb}.ds-secondary:focus-visible{outline:3px solid var(--focus,#548c80);outline-offset:3px}.ds-secondary:disabled{cursor:not-allowed;opacity:.48}@media(prefers-reduced-motion:reduce){.ds-secondary{transition:none}}",
+      "refersTo": "button-secondary"
+    },
+    {
+      "name": "安静按钮",
+      "kind": "button",
+      "description": "用于打开宠物包、暂停等低强调操作。",
+      "html": "<button class=\"ds-quiet\">打开宠物包</button>",
+      "css": ".ds-quiet{font-family:\"PingFang SC\",\"Microsoft YaHei UI\",\"Microsoft YaHei\",sans-serif;font-size:13px;min-height:40px;padding:9px 13px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:background .18s var(--ease,cubic-bezier(.16,1,.3,1)),color .18s var(--ease,cubic-bezier(.16,1,.3,1));background:transparent;color:var(--ink,#18282a);border:1px solid transparent}.ds-quiet:hover{background:#e7edeb}.ds-quiet:focus-visible{outline:3px solid var(--focus,#548c80);outline-offset:3px}.ds-quiet:disabled{cursor:not-allowed;opacity:.48}@media(prefers-reduced-motion:reduce){.ds-quiet{transition:none}}",
+      "refersTo": "button-quiet"
+    },
+    {
+      "name": "文字操作",
+      "kind": "button",
+      "description": "短文本连接制作步骤。",
+      "html": "<button class=\"ds-link\">接着设置动作 <svg width=\"17\" height=\"17\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.65\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M4 12h16m-6-6 6 6-6 6\"/></svg></button>",
+      "css": ".ds-link{font-family:\"PingFang SC\",\"Microsoft YaHei UI\",\"Microsoft YaHei\",sans-serif;font-size:12px;min-height:30px;padding:0;border:0;background:transparent;color:var(--green,#244a46);display:inline-flex;align-items:center;gap:8px;cursor:pointer}.ds-link:hover{color:#376d61;text-decoration:underline}.ds-link:focus-visible{outline:3px solid var(--focus,#548c80);outline-offset:3px}",
+      "refersTo": "link-action"
+    },
+    {
+      "name": "名称字段",
+      "kind": "input",
+      "description": "标签在上，白底字段支持明确的键盘焦点。",
+      "html": "<label class=\"ds-field\">它叫什么？<input value=\"朋友的猫\" maxlength=\"30\" placeholder=\"给桌宠起个名字\"></label>",
+      "css": ".ds-field{display:block;font-family:\"PingFang SC\",\"Microsoft YaHei UI\",\"Microsoft YaHei\",sans-serif;font-size:12px;color:#374b48}.ds-field input{display:block;margin-top:9px;width:100%;height:39px;border:1px solid #ced8d4;border-radius:6px;padding:7px 10px;background:#fff;color:var(--ink,#18282a);font-family:inherit;font-size:13px;caret-color:var(--green,#244a46)}.ds-field input::placeholder{color:#64766f}.ds-field input:focus-visible{outline:3px solid var(--focus,#548c80);outline-offset:3px}",
+      "refersTo": "field-text"
+    },
+    {
+      "name": "制作步骤",
+      "kind": "nav",
+      "description": "当前步骤用序号填色和标签字重共同区分。",
+      "html": "<nav class=\"ds-steps\" aria-label=\"制作步骤\"><button aria-current=\"step\"><span>1</span><strong>照片</strong></button><button><span>2</span><strong>动作</strong></button><button><span>3</span><strong>陪伴</strong></button></nav>",
+      "css": ".ds-steps{display:flex;padding:20px 20px 18px;gap:16px;border-bottom:1px solid var(--line,#dce2e2);background:#fff;font-family:\"PingFang SC\",\"Microsoft YaHei UI\",\"Microsoft YaHei\",sans-serif}.ds-steps button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;min-height:60px;padding:0;border:0;background:transparent;color:#697a77;cursor:pointer}.ds-steps button:hover{background:transparent}.ds-steps button:focus-visible{outline:3px solid var(--focus,#548c80);outline-offset:3px}.ds-steps span{width:26px;height:26px;border:1px solid #d6dfdc;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-variant-numeric:tabular-nums}.ds-steps strong{font-size:12px;font-weight:500}.ds-steps [aria-current=step]{color:var(--green,#244a46)}.ds-steps [aria-current=step] span{background:var(--green,#244a46);border-color:var(--green,#244a46);color:#fff}.ds-steps [aria-current=step] strong{font-weight:650}@media(max-width:760px){.ds-steps{padding:16px 19px;gap:15px}.ds-steps button{flex-direction:row;min-height:28px;gap:8px}.ds-steps span{width:23px;height:23px}}"
+    },
+    {
+      "name": "对象状态标签",
+      "kind": "chip",
+      "description": "贴近宠物名称，标示示例或用户作品。",
+      "html": "<span class=\"ds-tag\">示例猫咪</span>",
+      "css": ".ds-tag{font-family:\"PingFang SC\",\"Microsoft YaHei UI\",\"Microsoft YaHei\",sans-serif;font-size:10px;color:#546960;padding:3px 7px;border-radius:4px;background:#f0f4f1}"
+    },
+    {
+      "name": "照片投放框",
+      "kind": "button",
+      "description": "照片选择和拖放的明确入口；文件要求紧邻操作。",
+      "html": "<button class=\"ds-upload\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.65\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 16V3m-4 4 4-4 4 4M4 16v5h16v-5\"/></svg><strong>选择宠物照片</strong><span>也可以拖到这里</span><small>JPG / PNG / WebP · 10 MB 以内</small></button>",
+      "css": ".ds-upload{font-family:\"PingFang SC\",\"Microsoft YaHei UI\",\"Microsoft YaHei\",sans-serif;width:100%;height:146px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border:1px dashed #adbfb8;background:#f6f9f7;color:var(--ink,#18282a);border-radius:8px;cursor:pointer;transition:background .18s var(--ease,cubic-bezier(.16,1,.3,1))}.ds-upload svg{width:25px;height:25px;margin-bottom:3px;color:var(--green,#244a46)}.ds-upload strong{font-size:13px;font-weight:600}.ds-upload span{font-size:11px;color:#61716c}.ds-upload small{font-size:10px;color:#61716c;margin-top:6px}.ds-upload:hover{background:#e7edeb}.ds-upload:focus-visible{outline:3px solid var(--focus,#548c80);outline-offset:3px}.ds-upload:disabled{cursor:not-allowed;opacity:.48}@media(prefers-reduced-motion:reduce){.ds-upload{transition:none}}",
+      "refersTo": "photo-upload"
+    },
+    {
+      "name": "动作图块：待添加",
+      "kind": "card",
+      "description": "空状态来自实际界面；不借用示例猫伪装用户的动作。",
+      "html": "<button class=\"ds-action\"><span class=\"ds-action-photo\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.65\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3\" y=\"3\" width=\"18\" height=\"18\" rx=\"2\"/><circle cx=\"9\" cy=\"8\" r=\"1.5\"/><path d=\"m3 17 5-5 4 4 4-7 5 6\"/></svg></span><span class=\"ds-action-label\">走一走<small>待添加图片</small></span></button>",
+      "css": ".ds-action{font-family:\"PingFang SC\",\"Microsoft YaHei UI\",\"Microsoft YaHei\",sans-serif;display:block;min-width:0;width:100%;padding:0;border:0;border-radius:0;background:transparent;text-align:left;color:var(--ink,#18282a);cursor:pointer}.ds-action-photo{height:89px;border:1px solid #e0e7e3;background:#f7f8f7;border-radius:5px;display:flex;align-items:center;justify-content:center;overflow:hidden}.ds-action-photo svg{color:#a4b3ac}.ds-action:hover .ds-action-photo{background:#eaf0ec}.ds-action:focus-visible{outline:3px solid var(--focus,#548c80);outline-offset:3px}.ds-action-label{display:block;padding-top:10px;font-size:12px;font-weight:550}.ds-action-label small{display:block;font-size:10px;color:#5b6e64;margin-top:5px;font-weight:400}",
+      "refersTo": "action-photo"
+    },
+    {
+      "name": "陪伴开关",
+      "kind": "input",
+      "description": "位置和颜色共同反馈设置状态。",
+      "html": "<label class=\"ds-toggle\"><span>自行切换动作<small>走走、歇歇，再睡一会儿</small></span><input type=\"checkbox\" role=\"switch\" checked></label>",
+      "css": ".ds-toggle{font-family:\"PingFang SC\",\"Microsoft YaHei UI\",\"Microsoft YaHei\",sans-serif;display:flex;align-items:center;justify-content:space-between;font-size:13px;gap:16px;padding:5px 0;color:var(--ink,#18282a)}.ds-toggle small{display:block;font-size:10px;line-height:1.8;color:var(--muted,#586969);margin-top:5px}.ds-toggle input{appearance:none;width:33px;height:20px;border:0;border-radius:20px;background:#c1ccc6;flex-shrink:0;position:relative;cursor:pointer;margin:0}.ds-toggle input:before{content:\"\";position:absolute;width:14px;height:14px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .16s var(--ease,cubic-bezier(.16,1,.3,1))}.ds-toggle input:checked{background:var(--green,#244a46)}.ds-toggle input:checked:before{transform:translateX(13px)}.ds-toggle input:focus-visible{outline:3px solid var(--focus,#548c80);outline-offset:3px}@media(prefers-reduced-motion:reduce){.ds-toggle input:before{transition:none}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "照片展台",
+    "overview": "照片展台把真实宠物留在画面中心。冷灰背景承接毛发和透明边缘，白色工具区与松绿色操作退在周围；标题像展签，动作照片像一排可试播的接触印样。\n\n界面以中文短句、直接的控件和清楚的状态说明支持制作。品牌与主标题使用有笔画性格的宋体，操作文字使用系统无衬线体。结构保持平整，只有宠物和必要的处理状态运动。",
+    "keyCharacteristics": [
+      "真实照片承担主体与结果证明。",
+      "冷灰、白色和单一松绿强调色。",
+      "宋体标题配合紧凑、清楚的中文操作文字。",
+      "平整工作面、细边线和轻微圆角。"
+    ],
+    "rules": [
+      {
+        "name": "The Working Green Rule",
+        "body": "松绿同时标识可执行动作、当前选择和品牌；不把它铺满照片展台。",
+        "section": "colors"
+      },
+      {
+        "name": "The Photo First Rule",
+        "body": "照片和动作帧必须保留原有轮廓与比例；文字解释状态，不能用装饰图形替代实际结果。",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Workbench Rule",
+        "body": "制作区域依靠底色与细边线分隔；阴影只用于短暂浮在内容上方的反馈。",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do 让真实宠物图像拥有足够留白，并以完整轮廓展示。",
+      "Do 用文字、边线与选中标记共同说明状态，保留键盘焦点轮廓。",
+      "Do 为操作提供中文名称；图标使用描边 SVG，单独出现时提供可访问名称。",
+      "Do 保持控件位置稳定；减少动态效果的系统偏好应同时影响界面与宠物初始播放状态。"
+    ],
+    "donts": [
+      "Don't 把说明标签放大成新的装饰性眉题，或让每个工具组都拥有一层浮动卡片。",
+      "Don't 用阴影、光晕或大面积强调色抢走宠物照片的注意力。",
+      "Don't 把当前页面的小字号脚注、演示猫姿态或标题字体子集当作新页面的通用能力。"
+    ]
+  }
+}

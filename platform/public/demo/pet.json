@@ -1,0 +1,118 @@
+{
+  "format": "desktop-pets",
+  "version": 1,
+  "pet": {
+    "name": "朋友的猫"
+  },
+  "assets": [
+    {
+      "id": "cat",
+      "width": 960,
+      "height": 960,
+      "file": "cat.png"
+    },
+    {
+      "id": "cat-stretch",
+      "width": 960,
+      "height": 960,
+      "file": "cat-stretch.png"
+    },
+    {
+      "id": "cat-sleep",
+      "width": 960,
+      "height": 960,
+      "file": "cat-sleep.png"
+    },
+    {
+      "id": "cat-walk-0",
+      "width": 960,
+      "height": 960,
+      "file": "cat-walk-0.png"
+    },
+    {
+      "id": "cat-walk-1",
+      "width": 960,
+      "height": 960,
+      "file": "cat-walk-1.png"
+    },
+    {
+      "id": "cat-walk-2",
+      "width": 960,
+      "height": 960,
+      "file": "cat-walk-2.png"
+    },
+    {
+      "id": "cat-walk-3",
+      "width": 960,
+      "height": 960,
+      "file": "cat-walk-3.png"
+    },
+    {
+      "id": "cat-walk-4",
+      "width": 960,
+      "height": 960,
+      "file": "cat-walk-4.png"
+    },
+    {
+      "id": "cat-walk-5",
+      "width": 960,
+      "height": 960,
+      "file": "cat-walk-5.png"
+    },
+    {
+      "id": "cat-walk-6",
+      "width": 960,
+      "height": 960,
+      "file": "cat-walk-6.png"
+    },
+    {
+      "id": "cat-walk-7",
+      "width": 960,
+      "height": 960,
+      "file": "cat-walk-7.png"
+    }
+  ],
+  "actions": {
+    "idle": {
+      "frames": [
+        "cat"
+      ],
+      "fps": 1
+    },
+    "walk": {
+      "frames": [
+        "cat-walk-0",
+        "cat-walk-1",
+        "cat-walk-2",
+        "cat-walk-3",
+        "cat-walk-4",
+        "cat-walk-5",
+        "cat-walk-6",
+        "cat-walk-7"
+      ],
+      "fps": 8
+    },
+    "stretch": {
+      "frames": [
+        "cat-stretch"
+      ],
+      "fps": 1
+    },
+    "sleep": {
+      "frames": [
+        "cat-sleep"
+      ],
+      "fps": 1
+    }
+  },
+  "settings": {
+    "autoPlay": true,
+    "activity": "calm",
+    "size": 260,
+    "reminder": {
+      "enabled": false,
+      "minutes": 45,
+      "message": "起来活动一下，也喝口水吧。"
+    }
+  }
+}

@@ -7,3 +7,16 @@ __pycache__/
 *.zip
 .env
 .env.*
+/platform/node_modules/
+/platform/dist/
+/platform/release/
+/platform/.runtime/
+/platform/electron-smoke.json
+/platform/electron-smoke.png
+/platform/universal-architectures.txt
+/.impeccable/*
+!/.impeccable/config.json
+!/.impeccable/design.json
+!/.impeccable/surfaces/
+/.impeccable/surfaces/*
+!/.impeccable/surfaces/platform-src-app-jsx.md
