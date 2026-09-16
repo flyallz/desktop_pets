@@ -59,7 +59,7 @@ jobs:
           for runner, platform, arch in [('windows-latest','win32','x64'),('macos-15','darwin','arm64'),('macos-15-intel','darwin','x64')]:
               folder = Path('artifacts') / ('desktop-pets-' + runner)
               report = json.loads((folder / 'electron-smoke.json').read_text())
-              required = ['photoRendered','transparentCorner','loaded','alwaysOnTop','sandbox']
+              required = ['photoRendered','menuUsable','appearanceSaved','appearanceRestored','transparentCorner','loaded','alwaysOnTop','sandbox']
               if report['platform'] != platform or report['arch'] != arch or not all(report.get(k) is True for k in required):
                   raise SystemExit('Native startup checks failed: ' + runner)
           mac = Path('artifacts/desktop-pets-macos-15')
@@ -85,15 +85,16 @@ jobs:
           BUILD_SHA: ${{ steps.build.outputs.sha }}
         run: |
           cat > "$RUNNER_TEMP/notes.md" <<'EOF'
-          照片制作器与 Windows / Mac 桌面伴侣的首个跨平台内测版。
+          照片制作器与 Windows / Mac 桌面伴侣的跨平台内测版。
 
           - Windows：下载 win-x64.zip，完整解压后运行 Desktop Pets Beta.exe，保留旁边的文件。
           - Mac：下载 mac-universal.zip，同时包含 M 系列与 Intel，要求 macOS 13 或更新。尚未签名或公证，系统可能阻止直接打开，正式发放前仍需完成签名与真机安装验收。
           - 右键猫咪选择“打开制作器”，用自己的照片制作，保存 .petpack.json 后再通过“导入宠物包”使用。不需要安装开发工具。
+          - 点击猫咪打开动作与造型菜单，快捷换姿势，或选择红围巾、蓝领结、原样；配饰可按姿势调位置、大小和角度。网页须保存宠物包，桌面端的造型自动保存在本机。
           - 可调整大小、自动动作、休息提醒和专注；自己的完整步态需自行添加动作帧。未接入 AI 新姿态生成、账号、云备份或支付。
           - 自动去背景需要另行启动本机抠图工具；未配置时可用透明 PNG 或画笔修整。
 
-          Windows、Mac arm64、Mac x64 均通过原生启动检查；Mac 通用二进制已核对两种架构。云端检查不替代朋友真机上的安装、拖动、鼠标穿透与多屏验收。详见源码 platform/README.md 和 docs/platform-verification.md。
+          Windows、Mac arm64、Mac x64 均通过原生启动、点击菜单及造型保存恢复检查；Mac 通用二进制已核对两种架构。云端检查不替代朋友真机上的安装、拖动、鼠标穿透与多屏验收。详见源码 platform/README.md 和 docs/platform-verification.md。
 
           本版宠物包与原 C# Windows v0.4.1 样品不兼容，请使用这里的新客户端。源码附在本页下方，安装包校验值在 SHA256SUMS.txt。
           EOF

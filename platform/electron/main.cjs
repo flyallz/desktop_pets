@@ -1,10 +1,30 @@
 const {app,BrowserWindow,ipcMain,Menu,Tray,nativeImage,dialog,screen,Notification,shell,session} = require('electron');
 const fs=require('node:fs/promises'),path=require('node:path');
-let petWindow,studioWindow,tray,savedText=null,autoPlay=true,dragTimer=null,dragOrigin=null,parsePackage,clampPosition,lastMove=0,lastNotify=0;
+let petWindow,studioWindow,tray,savedText=null,autoPlay=true,dragTimer=null,dragOrigin=null,parsePackage,validatePackage,validateAppearance,clampPosition,lastMove=0,lastNotify=0;
 const smoke=process.argv.includes('--smoke-test');
 if(smoke)app.setPath('userData',path.resolve('../.build/electron-smoke-profile'));
 const outIndex=path.join(__dirname,'../dist/index.html');
 const storage=()=>path.join(app.getPath('userData'),'pet.json');
+let saveQueue=Promise.resolve();
+async function defaultPet(){
+  const folder=path.join(__dirname,'../dist/demo');
+  const value=JSON.parse(await fs.readFile(path.join(folder,'pet.json'),'utf8'));
+  for(const asset of value.assets)asset.data='data:image/png;base64,'+(await fs.readFile(path.join(folder,asset.file))).toString('base64');
+  return validatePackage(value);
+}
+function updateStored(change){
+  const task=saveQueue.then(async()=>{
+    const current=savedText?parsePackage(savedText):await defaultPet();
+    const value=validatePackage(await change(current)),text=JSON.stringify(value);
+    await fs.mkdir(app.getPath('userData'),{recursive:true});
+    await fs.writeFile(storage()+'.tmp',text,'utf8');
+    await fs.rename(storage()+'.tmp',storage());
+    savedText=text;autoPlay=value.settings.autoPlay;refreshTray();
+    return value;
+  });
+  saveQueue=task.catch(()=>{});
+  return task;
+}
 const safePreferences={preload:path.join(__dirname,'preload.cjs'),contextIsolation:true,nodeIntegration:false,sandbox:true,webSecurity:true};
 function allowed(event){return [petWindow,studioWindow].some(w=>w&&!w.isDestroyed()&&w.webContents===event.sender)&&event.senderFrame===event.sender.mainFrame;}
 function petOnly(event){return allowed(event)&&event.sender===petWindow.webContents;}
@@ -43,10 +63,7 @@ async function importPet(){
     const stat=await fs.stat(result.filePaths[0]);
     if(stat.size>32*1024*1024)throw new Error('宠物包不能超过 32 MB。');
     const text=await fs.readFile(result.filePaths[0],'utf8'),value=await verify(text);
-    await fs.mkdir(app.getPath('userData'),{recursive:true});
-    await fs.writeFile(storage()+'.tmp',JSON.stringify(value),'utf8');
-    await fs.rename(storage()+'.tmp',storage());
-    savedText=JSON.stringify(value);autoPlay=value.settings.autoPlay;
+    await updateStored(()=>value);
     send('package',{text:savedText});recenter();showPet();refreshTray();
   }catch(error){dialog.showErrorBox('没有导入成功',error.message);}
 }
@@ -56,7 +73,7 @@ function menu(){
     {type:'separator'},
     {label:'自动活动',type:'checkbox',checked:autoPlay,click:async item=>{
       autoPlay=item.checked;send('auto',{enabled:autoPlay});refreshTray();
-      if(savedText){const value=parsePackage(savedText);value.settings.autoPlay=autoPlay;savedText=JSON.stringify(value);await fs.writeFile(storage(),savedText);}
+      try{await updateStored(value=>({...value,settings:{...value.settings,autoPlay:item.checked}}));}catch(error){dialog.showErrorBox('设置没有保存',error.message);}
     }},
     {label:'走一走',click:()=>send('walk')},{label:'伸懒腰',click:()=>send('stretch')},
     {label:'睡一会儿',click:()=>send('sleep')},{label:'叫醒它',click:()=>send('wake')},
@@ -71,7 +88,7 @@ if(!app.requestSingleInstanceLock()){app.quit();}
 else{
 app.on('second-instance',()=>{if(petWindow){showPet();recenter();}});
 app.whenReady().then(async()=>{
-  ({parsePackage}=await import('../shared/pet-package.mjs'));
+  ({parsePackage,validatePackage,validateAppearance}=await import('../shared/pet-package.mjs'));
   ({clampPosition}=await import('../shared/engine.mjs'));
   session.defaultSession.setPermissionRequestHandler((_wc,_permission,callback)=>callback(false));
   session.defaultSession.webRequest.onHeadersReceived((details,callback)=>callback({responseHeaders:{...details.responseHeaders,'Content-Security-Policy':["default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' data: blob:; object-src 'none'; base-uri 'none'"]}}));
@@ -87,6 +104,12 @@ app.whenReady().then(async()=>{
   }
   let hit=false;
   ipcMain.handle('pet:load',event=>{if(!allowed(event))throw new Error('Invalid sender');return savedText;});
+  ipcMain.handle('pet:appearance',async(event,appearance)=>{
+    if(!petOnly(event))throw new Error('Invalid sender');
+    const clean=validateAppearance(appearance);
+    const value=await updateStored(current=>({...current,settings:{...current.settings,appearance:clean}}));
+    return value.settings.appearance;
+  });
   ipcMain.handle('pet:save',async(event,text)=>{
     if(!allowed(event))throw new Error('Invalid sender');
     const value=await verify(text);
@@ -134,9 +157,10 @@ app.whenReady().then(async()=>{
       if(photoRendered)break;
       await new Promise(resolve=>setTimeout(resolve,100));
     }
+    const controls=await require('./smoke-controls.cjs')(petWindow,storage());
     const canvas=await petWindow.webContents.capturePage();
     await fs.writeFile(output.replace(/\.json$/,'.png'),canvas.toPNG());
-    const report={photoRendered,transparentCorner:canvas.toBitmap()[3]===0,platform:process.platform,arch:process.arch,loaded:!petWindow.webContents.isLoading(),transparentWindowRequested:true,alwaysOnTop:petWindow.isAlwaysOnTop(),sandbox:petWindow.webContents.getLastWebPreferences().sandbox,bounds:petWindow.getBounds()};
+    const report={photoRendered,...controls,transparentCorner:canvas.toBitmap()[3]===0,platform:process.platform,arch:process.arch,loaded:!petWindow.webContents.isLoading(),transparentWindowRequested:true,alwaysOnTop:petWindow.isAlwaysOnTop(),sandbox:petWindow.webContents.getLastWebPreferences().sandbox,bounds:petWindow.getBounds()};
     await fs.writeFile(output,JSON.stringify(report,null,2));app.exit(Object.values(report).includes(false)?1:0);
   }
 }).catch(error=>{console.error(error.message);app.exit(1);});

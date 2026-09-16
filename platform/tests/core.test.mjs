@@ -80,3 +80,29 @@ test('a delayed frame keeps real focus time without teleporting the pet',()=>{
  const e=new PetEngine(source);e.play('walk');e.focusRemaining=60;
  const result=e.tick(20,400);assert.equal(result.focusRemaining,40);assert.ok(Math.abs(result.dx)<6);
 });
+
+
+test('legacy pet packages gain removable default accessories without changing photos',()=>{
+ const pet=copy();delete pet.settings.appearance;const parsed=validatePackage(pet);
+ assert.equal(parsed.settings.appearance.style,'none');assert.deepEqual(parsed.assets,pet.assets);
+});
+test('accessory choice and per-pose position survive export and import',()=>{
+ const pet=copy();pet.settings.appearance.style='bow';pet.settings.appearance.anchors.sleep={x:.7,y:.8,width:.18,angle:-15};
+ assert.deepEqual(parsePackage(serializePackage(pet)).settings.appearance,pet.settings.appearance);
+});
+for(const [name,mutate] of [
+ ['unrecognized accessory',p=>p.settings.appearance.style='https://example.com/accessory.svg'],
+ ['nonfinite placement',p=>p.settings.appearance.anchors.idle.x=NaN],
+ ['off-canvas placement',p=>p.settings.appearance.anchors.idle.y=3],
+ ['oversized accessory',p=>p.settings.appearance.anchors.walk.width=10],
+])test('rejects '+name,()=>{const p=copy();mutate(p);assert.throws(()=>validatePackage(p));});
+test('quick pose cycling visits only available poses and wraps around',()=>{
+ const p=copy();delete p.actions.walk;const e=new PetEngine(p);
+ e.cycle();assert.equal(e.action,'stretch');e.cycle();assert.equal(e.action,'sleep');e.cycle();assert.equal(e.action,'idle');
+ const one=new PetEngine(newPackage('新猫',source.assets[0]));assert.equal(one.cycle(),false);assert.equal(one.action,'idle');
+});
+test('using controls holds the pose and movement without losing focus time',()=>{
+ const e=new PetEngine(source);e.play('walk');e.tick(.1);e.focusRemaining=100;
+ const before={elapsed:e.elapsed,x:e.x};const frame=e.tick(15,300,true);
+ assert.equal(frame.focusRemaining,85);assert.equal(frame.dx,0);assert.equal(e.x,before.x);assert.equal(e.elapsed,before.elapsed);
+});

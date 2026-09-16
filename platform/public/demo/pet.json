@@ -113,6 +113,35 @@
       "enabled": false,
       "minutes": 45,
       "message": "起来活动一下，也喝口水吧。"
+    },
+    "appearance": {
+      "style": "none",
+      "anchors": {
+        "idle": {
+          "x": 0.515,
+          "y": 0.33,
+          "width": 0.23,
+          "angle": 5
+        },
+        "walk": {
+          "x": 0.69,
+          "y": 0.755,
+          "width": 0.135,
+          "angle": -12
+        },
+        "stretch": {
+          "x": 0.625,
+          "y": 0.8,
+          "width": 0.165,
+          "angle": 8
+        },
+        "sleep": {
+          "x": 0.635,
+          "y": 0.872,
+          "width": 0.135,
+          "angle": 6
+        }
+      }
     }
   }
 }

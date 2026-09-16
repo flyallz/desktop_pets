@@ -32,7 +32,7 @@ export default function App() {
     let cancelled=false;
     async function start() {
       try {
-        const stored=desktop ? await window.petDesktop.load() : null;
+        const stored=window.petDesktop ? await window.petDesktop.load() : null;
         const value=stored ? parsePackage(stored) : validatePackage(await loadDemo());
         if(!cancelled){setPet(value);setIsDemo(!stored);}
       } catch(e){if(!cancelled) failure(e);}
@@ -55,6 +55,12 @@ export default function App() {
     if(step>0 && window.matchMedia('(max-width: 760px)').matches) document.querySelector('.step-content')?.scrollIntoView({block:'start'});
   },[step]);
   function changePet(next) {setDirty(true);setPet(next);setExported(false);setError('');}
+  async function changeAppearance(appearance) {
+    if(desktop){
+      const saved=await window.petDesktop.appearance(appearance);
+      setPet(current=>({...current,settings:{...current.settings,appearance:saved}}));
+    }else changePet({...pet,settings:{...pet.settings,appearance}});
+  }
   function setting(key,value) {
     changePet({...pet,settings:{...pet.settings,[key]:value}});
     if(key==='autoPlay' && !value)send('idle');
@@ -123,7 +129,7 @@ export default function App() {
     catch(e){failure(e);}finally{setBusy('');}
   }
   if(!pet)return <main className="loading-screen"><Icon name="cat"/><h1>桌宠工坊</h1><p role={error?'alert':'status'}>{error || '正在准备猫咪的照片和动作…'}</p>{error&&<button onClick={()=>location.reload()}>重新加载</button>}</main>;
-  if(desktop)return <main className="desktop-shell"><PetStage pet={pet} command={command} onState={setState} desktop/></main>;
+  if(desktop)return <main className="desktop-shell"><PetStage pet={pet} command={command} onState={setState} onAppearanceChange={changeAppearance} desktop/></main>;
   const minutes=state.focusRemaining===null?null:Math.ceil(state.focusRemaining/60);
   return <div className="app-shell">
     <header className="site-header">
@@ -176,17 +182,17 @@ export default function App() {
           </div>
           <button className="mobile-upload" disabled={!!busy} onClick={()=>photoInput.current.click()}><Icon name="upload"/>换成我的照片</button>
           {editor?<PhotoEditor asset={pet.assets.find(a=>a.id===pet.actions.idle.frames[0])} onCancel={()=>setEditor(false)} onSave={asset=>{changePet({...pet,assets:pet.assets.map(a=>a.id===asset.id?asset:a)});setEditor(false);notify('已保存背景修整。');}}/>
-            :<PetStage pet={pet} command={command} onState={setState} background={background}/>}
+            :<PetStage pet={pet} command={command} onState={setState} onAppearanceChange={changeAppearance} background={background}/>}
           <div className="playback-bar"><div className="live-status"><span className={state.paused?'status-dot paused':'status-dot'}/>{state.paused?'已暂停':ACTION_NAMES[state.action]}<span className="status-detail">{pet.settings.autoPlay?'自动活动已开':'手动试播'}</span></div>
             <div><button className="icon-button" onClick={()=>send('home')} aria-label="宠物回到中央" title="回到中央"><Icon name="image"/></button><button className="quiet pause-button" onClick={()=>send('pause')}><Icon name={state.paused?'play':'pause'}/>{state.paused?'继续':'暂停'}</button></div></div>
           <div className="action-strip" aria-label="动作试播">{Object.entries(ACTION_NAMES).map(([id,label])=>{
               const available=!!pet.actions[id];
               return <button key={id} className={'action-tile'+(state.action===id?' selected':'')} aria-pressed={state.action===id} onClick={()=>available?send(id):(setStep(1),setPoseAction(id),notify('先添加这个动作的图片，再来试播。'))}>
                 <div className="action-photo">{available?<img src={getFrame(pet,id)} alt="" draggable="false"/>:<Icon name="image"/>}{state.action===id&&<span className="playing-mark"><Icon name="play"/></span>}</div>
-                <span className="action-label">{label}<small>{available?(id==='walk'?pet.actions[id].frames.length+' 帧动作':id==='idle'?'轻轻呼吸':id==='sleep'?'点击叫醒':'舒展一下'):'待添加图片'}</small></span>
+                <span className="action-label">{label}<small>{available?(id==='walk'?pet.actions[id].frames.length+' 帧动作':id==='idle'?'轻轻呼吸':id==='sleep'?'安静地睡':'舒展一下'):'待添加图片'}</small></span>
               </button>;
             })}</div>
-          <div className="surface-caption"><span>点击摸摸它，拖动换个位置。<span className="desktop-only"> 预览背景不会进入宠物包。</span></span><button className="text-link" onClick={()=>isDemo?send('greet'):setReplacePending(true)}>{isDemo?'打个招呼':'重看示例'}</button></div>
+          <div className="surface-caption"><span>点击选动作和造型，拖动换个位置。<span className="desktop-only"> 预览背景不会进入宠物包。</span></span><button className="text-link" onClick={()=>isDemo?send('greet'):setReplacePending(true)}>{isDemo?'打个招呼':'重看示例'}</button></div>
           {replacePending&&<div className="inline-confirm"><p>恢复示例会替换当前作品，请先保存宠物包。</p><button onClick={()=>setReplacePending(false)}>保留当前作品</button><button onClick={restoreDemo}>恢复示例</button></div>}
         </div>
       </section>

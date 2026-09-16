@@ -3,6 +3,24 @@ export const FORMAT = 'desktop-pets';
 export const VERSION = 1;
 export const MAX_PACKAGE_BYTES = 32 * 1024 * 1024;
 export const ACTIONS = ['idle', 'walk', 'stretch', 'sleep'];
+export const LOOKS = ['none', 'scarf', 'bow'];
+export const DEFAULT_ANCHOR = Object.freeze({x: 0.5, y: 0.4, width: 0.24, angle: 0});
+export function validateAppearance(value = {style: 'none', anchors: {}}) {
+  if (!object(value) || !LOOKS.includes(value.style) || (value.anchors !== undefined && !object(value.anchors))) fail('造型设置不正确。');
+  const anchors = {};
+  for (const action of ACTIONS) {
+    const anchor = value.anchors?.[action] ?? DEFAULT_ANCHOR;
+    if (!object(anchor)) fail('配饰位置不正确。');
+    const ranges = {x: [0, 1], y: [0, 1], width: [0.05, 0.6], angle: [-90, 90]};
+    anchors[action] = {};
+    for (const [key, [min, max]] of Object.entries(ranges)) {
+      const number = anchor[key];
+      if (!Number.isFinite(number) || number < min || number > max) fail('配饰位置或大小超出范围。');
+      anchors[action][key] = number;
+    }
+  }
+  return {style: value.style, anchors};
+}
 export const DEFAULT_SETTINGS = Object.freeze({
   autoPlay: true, activity: 'calm', size: 260,
   reminder: { enabled: false, minutes: 45, message: '起来活动一下，也喝口水吧。' },
@@ -72,6 +90,7 @@ export function validatePackage(input) {
     settings: {
       autoPlay: settings.autoPlay, activity: settings.activity,
       size: int(settings.size, 160, 360, '桌宠大小'),
+      appearance: validateAppearance(settings.appearance),
       reminder: {
         enabled: reminder.enabled, minutes: int(reminder.minutes, 5, 180, '提醒间隔'),
         message: text(reminder.message, 80, '提醒内容'),

@@ -2,6 +2,7 @@ const {contextBridge, ipcRenderer} = require('electron');
 contextBridge.exposeInMainWorld('petDesktop', {
   load:()=>ipcRenderer.invoke('pet:load'),
   save:text=>ipcRenderer.invoke('pet:save',text),
+  appearance:value=>ipcRenderer.invoke('pet:appearance',value),
   move:dx=>ipcRenderer.invoke('pet:move',dx),
   hit:hit=>ipcRenderer.send('pet:hit',!!hit),
   drag:active=>ipcRenderer.send('pet:drag',!!active),

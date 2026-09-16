@@ -23,5 +23,6 @@ pet={"format":"desktop-pets","version":1,"pet":{"name":"朋友的猫"},"assets":
 "idle":{"frames":["cat"],"fps":1},"walk":{"frames":[f"cat-walk-{i}" for i in range(8)],"fps":8},
 "stretch":{"frames":["cat-stretch"],"fps":1},"sleep":{"frames":["cat-sleep"],"fps":1}},
 "settings":{"autoPlay":True,"activity":"calm","size":260,"reminder":{"enabled":False,"minutes":45,"message":"起来活动一下，也喝口水吧。"}}}
+pet["settings"]["appearance"]={'style': 'none', 'anchors': {'idle': {'x': 0.515, 'y': 0.33, 'width': 0.23, 'angle': 5}, 'walk': {'x': 0.69, 'y': 0.755, 'width': 0.135, 'angle': -12}, 'stretch': {'x': 0.625, 'y': 0.8, 'width': 0.165, 'angle': 8}, 'sleep': {'x': 0.635, 'y': 0.872, 'width': 0.135, 'angle': 6}}}
 (output/"pet.json").write_text(json.dumps(pet,ensure_ascii=False,indent=2),encoding="utf-8")
 print("Prepared",len(assets),"approved demo poses")

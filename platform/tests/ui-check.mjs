@@ -19,7 +19,7 @@ try{
   await expect(page.locator('.live-status')).toContainText('走一走');
  });
  await check('manual sleep and explicit pause',async()=>{
-  await page.getByRole('button',{name:'睡一会儿 点击叫醒'}).click();
+  await page.getByRole('button',{name:'睡一会儿 安静地睡'}).click();
   await expect(page.locator('.live-status')).toContainText('睡一会儿');
   await page.getByRole('button',{name:'暂停',exact:true}).click();
   await expect(page.locator('.live-status')).toContainText('已暂停');

@@ -1,4 +1,5 @@
 // Pure clock: both renderers use the same action order, gait and reminder timing.
+import {ACTIONS} from './pet-package.mjs';
 const DURATION = { idle: 10, walk: 6.72, stretch: 3.2, sleep: 32 };
 export class PetEngine {
   constructor(pet, random = Math.random) {
@@ -30,6 +31,11 @@ export class PetEngine {
     this.paused = false;
     return true;
   }
+  cycle() {
+    const choices = ACTIONS.filter(action => this.pet.actions[action]);
+    if (choices.length < 2) return false;
+    return this.play(choices[(choices.indexOf(this.action) + 1) % choices.length]);
+  }
   wake() {
     this.manualSleep = false;
     this.play(this.pet.actions.stretch ? 'stretch' : 'idle', false);
@@ -45,27 +51,29 @@ export class PetEngine {
     }
     return this.bag.shift() || 'idle';
   }
-  tick(deltaSeconds, width = 0) {
+  tick(deltaSeconds, width = 0, holdMotion = false) {
     const wall = Number.isFinite(deltaSeconds) ? Math.max(0, deltaSeconds) : 0;
     const dt = Math.min(wall, 0.1);
     const events = [];
     let dx = 0;
     if (!this.paused) {
-      this.elapsed += dt;
-      if (!this.manualSleep && this.elapsed >= this.limit) {
-        const next = this.pet.settings.autoPlay ? this.next() : 'idle';
-        this.play(next, false);
-        if (next === 'idle') this.limit = (this.pet.settings.activity === 'lively' ? 5 : 10) + this.random() * 4;
-      }
-      if (this.action === 'walk') {
-        const ramp = Math.min(1, this.elapsed / 0.56, Math.max(0, (this.limit - this.elapsed) / 0.56));
-        dx = dt * 52 * ramp * this.direction;
-        this.x += dx;
-        if (width > 0) {
-          const half = width / 2;
-          if (Math.abs(this.x) > half) {
-            this.x = Math.max(-half, Math.min(half, this.x));
-            this.direction *= -1;
+      if (!holdMotion) {
+        this.elapsed += dt;
+        if (!this.manualSleep && this.elapsed >= this.limit) {
+          const next = this.pet.settings.autoPlay ? this.next() : 'idle';
+          this.play(next, false);
+          if (next === 'idle') this.limit = (this.pet.settings.activity === 'lively' ? 5 : 10) + this.random() * 4;
+        }
+        if (this.action === 'walk') {
+          const ramp = Math.min(1, this.elapsed / 0.56, Math.max(0, (this.limit - this.elapsed) / 0.56));
+          dx = dt * 52 * ramp * this.direction;
+          this.x += dx;
+          if (width > 0) {
+            const half = width / 2;
+            if (Math.abs(this.x) > half) {
+              this.x = Math.max(-half, Math.min(half, this.x));
+              this.direction *= -1;
+            }
           }
         }
       }

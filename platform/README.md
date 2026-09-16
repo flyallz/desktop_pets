@@ -11,6 +11,8 @@
 - 示例猫具备原地呼吸、8 帧行走、伸懒腰、睡觉；可自行轮换。
 - 换成自己的照片后只保留原地陪伴。行走需添加至少 4 张姿态帧，不能用示例猫冒充。
 - 自定义大小、活动节奏、休息提醒；可试用 25 分钟专注。
+- 点击宠物打开动作与造型菜单，快捷轮换已有姿势，或选择红围巾、蓝领结、原样。
+- 配饰叠加在原照片上，可按姿势调整位置、大小和角度；设置随宠物包保存。网页改动后须保存宠物包，桌面端的造型选择自动保存在本机。
 - 保存、重新导入 `.petpack.json`。文件包含照片、动作和设置，不含脚本或远程图片地址。
 - Electron 桌面端有透明窗口、托盘、拖动、原生菜单、宠物包导入及本地保存。
 
@@ -18,7 +20,7 @@
 
 ## 直接给朋友使用
 
-从 [v0.5 内测发布页](https://github.com/flyallz/desktop_pets/releases/tag/v0.5.0-beta.1) 下载相应压缩包：
+从 [v0.5 内测发布页](https://github.com/flyallz/desktop_pets/releases/tag/v0.5.0-beta.2) 下载相应压缩包：
 
 - Windows：完整解压 `win-x64.zip`，运行其中的 `Desktop Pets Beta.exe`，保留旁边的依赖文件。
 - Mac：`mac-universal.zip` 同时包含 M 系列与 Intel 支持，最低 macOS 13。当前没有签名或公证，系统可能阻止直接打开；正式发放前仍需补齐签名、公证和真机安装验收。
@@ -64,7 +66,9 @@ npm run api
 npm run desktop
 ```
 
-右键猫咪或托盘可以打开制作器、导入宠物包、选择动作、暂停或退出。隐藏后从托盘恢复。手动睡眠等到点击叫醒；自动小睡会自行结束。关闭客户端会停止提醒与计时。
+右键猫咪或托盘可以打开制作器、导入宠物包、选择动作、暂停或退出。隐藏后从托盘恢复。手动睡眠可以点猫咪后选其他动作，或通过右键菜单叫醒；自动小睡会自行结束。关闭客户端会停止提醒与计时。
+
+单击打开动作和造型，按住拖动移动宠物。键盘聚焦猫咪后可按 Enter / 空格打开菜单，Esc 关闭。调配饰时暂停宠物移动，专注和提醒计时继续。新版可读取旧宠物包；要保留配饰，请使用 v0.5.0-beta.2 或更新客户端，旧版会忽略配饰字段。
 
 文件在 Electron 的 `app.getPath('userData')` 下保存为 `pet.json`：Windows 通常是 `%APPDATA%\desktop-pets-platform\pet.json`，Mac 通常是 `~/Library/Application Support/desktop-pets-platform/pet.json`；以实际应用名称为准。备份该文件或制作器导出的宠物包即可。删除此文件可恢复示例。没有屏幕录制和自动开机启动。
 
@@ -87,6 +91,7 @@ npm test
 npm run build
 # 本机有 Edge 且网站/抠图服务已启动时：
 node tests/ui-check.mjs
+node tests/looks-ui.mjs
 # 原生窗口启动检查（会短暂显示测试猫咪后自行退出）：
 npx electron . --smoke-test
 ```
