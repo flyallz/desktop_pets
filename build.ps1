@@ -14,6 +14,11 @@ foreach ($pose in @('stretch', 'rest', 'sleep')) {
     if (-not (Test-Path -LiteralPath $photo)) { throw ('Missing posture photo: ' + $photo) }
     $arguments += '/resource:' + $photo + ',PhotoCat.cat-' + $pose + '.png'
 }
+foreach ($frame in 0..7) {
+    $photo = Join-Path $sampleRoot ('assets\cat-walk-' + $frame + '.png')
+    if (-not (Test-Path -LiteralPath $photo)) { throw ('Missing walking frame: ' + $photo) }
+    $arguments += '/resource:' + $photo + ',PhotoCat.cat-walk-' + $frame + '.png'
+}
 $arguments += '/win32icon:' + (Join-Path $sampleRoot 'assets\cat.ico')
 $arguments += Join-Path $sampleRoot 'src\CatPet.cs'
 $arguments += Join-Path $sampleRoot 'src\PhotoMotion.cs'

@@ -93,6 +93,8 @@ namespace PhotoCat
         private double bubbleUntil;
         private double petSize = 240;
         private int petCount;
+        private int walkingDirection = -1;
+        private double walkingRemainder;
 
         public PetWindow(bool selfTest)
         {
@@ -124,12 +126,19 @@ namespace PhotoCat
             bitmap.CopyPixels(pixels, stride, 0);
             cat.SetPhoto(bitmap);
             cat.AddPostures(LoadPhoto("cat-stretch.png"), LoadPhoto("cat-rest.png"), LoadPhoto("cat-sleep.png"));
+            BitmapSource[] walking = new BitmapSource[8];
+            for (int i = 0; i < walking.Length; i++) walking[i] = LoadPhoto("cat-walk-" + i + ".png");
+            cat.AddWalking(walking);
             cat.Cursor = Cursors.Hand;
             RenderOptions.SetBitmapScalingMode(cat, BitmapScalingMode.HighQuality);
             cat.MouseLeftButtonDown += BeginDrag;
             cat.MouseMove += ContinueDrag;
             cat.MouseLeftButtonUp += EndDrag;
-            cat.LostMouseCapture += delegate { moving = false; };
+            cat.LostMouseCapture += delegate
+            {
+                if (moving && moved) { KeepVisible(); motion.AfterDrag(); }
+                moving = false;
+            };
             cat.MouseRightButtonUp += delegate(object sender, MouseButtonEventArgs e)
             {
                 if (IsCatPixel(cat.PointFromScreen(ScreenCursor()))) OpenMenu();
@@ -225,7 +234,26 @@ namespace PhotoCat
             double now = clock.Elapsed.TotalSeconds;
             double delta = now - lastTick;
             lastTick = now;
-            if (animate) cat.SetPose(motion.Advance(delta));
+            if (animate && !moving && !menuOpen)
+            {
+                MotionPose pose = motion.Advance(delta);
+                if (pose.Posture == CatPosture.Walk)
+                {
+                    if (!testing)
+                    {
+                        Rect area = CurrentWorkArea();
+                        if (cat.Pose.Posture != CatPosture.Walk)
+                        {
+                            walkingDirection = Left + Width / 2 > area.Left + area.Width / 2 ? -1 : 1;
+                            walkingRemainder = 0;
+                        }
+                        AdvanceWalkingPosition(area, delta);
+                        pose = motion.Advance(0);
+                    }
+                    pose.FaceLeft = walkingDirection < 0;
+                }
+                cat.SetPose(pose);
+            }
             PositionBubble();
             if (now > bubbleUntil) bubble.Visibility = Visibility.Collapsed;
             if (!testing && !moving && !menuOpen)
@@ -260,7 +288,8 @@ namespace PhotoCat
             bool wasMoved = moved;
             moving = false;
             cat.ReleaseMouseCapture();
-            if (wasMoved) KeepVisible(); else Pet();
+            if (wasMoved) { KeepVisible(); motion.AfterDrag(); }
+            else Pet();
             e.Handled = true;
         }
 
@@ -288,6 +317,48 @@ namespace PhotoCat
         private void PositionBubble()
         {
             Canvas.SetTop(bubble, Math.Max(4, 4 + (cat.HeadTop - 56) * petSize / 953));
+        }
+
+        private void WalkPet()
+        {
+            animate = true;
+            motion.Walk();
+            lastTick = clock.Elapsed.TotalSeconds;
+            Tick();
+            Say("走两步，活动一下。", 2);
+        }
+
+        private void ToggleAutomatic()
+        {
+            motion.SetAutomatic(!motion.Automatic);
+            Tick();
+            Say(motion.Automatic ? "我会自己走走、休息。" : "我在这里陪你。", 2);
+        }
+
+        private Rect CurrentWorkArea()
+        {
+            Drawing.Rectangle work = Forms.Screen.FromHandle(handle).WorkingArea;
+            Point a = PointFromScreen(new Point(work.Left, work.Top));
+            Point b = PointFromScreen(new Point(work.Right, work.Bottom));
+            return new Rect(new Point(Left + a.X, Top + a.Y), new Point(Left + b.X, Top + b.Y));
+        }
+
+        private void AdvanceWalkingPosition(Rect area, double seconds)
+        {
+            double minimum = area.Left + 8, maximum = area.Right - Width - 8;
+            if (maximum <= minimum)
+            {
+                motion.StopWalking();
+                return;
+            }
+            double distance = Math.Max(0, Math.Min(seconds, 0.1))
+                * PetMotion.WalkStridePixels / PetMotion.WalkCycleSeconds * petSize / 953;
+            double target = Left + walkingDirection * distance + walkingRemainder;
+            if (target <= minimum) { target = minimum; walkingDirection = 1; }
+            if (target >= maximum) { target = maximum; walkingDirection = -1; }
+            Left = target;
+            // Windows rounds a top-level window to device pixels; retain the fraction for the next step.
+            walkingRemainder = target - Left;
         }
 
         private void StretchPet()
@@ -381,6 +452,10 @@ namespace PhotoCat
             menu.FontFamily = new FontFamily("Microsoft YaHei UI");
             menu.FontSize = 13;
             menu.Items.Add(MenuAction("摸一摸", Pet));
+            menu.Items.Add(MenuAction("走一走", WalkPet));
+            MenuItem automatic = MenuAction("自动切换动作", ToggleAutomatic);
+            automatic.IsChecked = motion.Automatic;
+            menu.Items.Add(automatic);
             menu.Items.Add(MenuAction("伸个懒腰", StretchPet));
             menu.Items.Add(MenuAction(motion.IsSleeping ? "叫醒它" : "睡一会儿", motion.IsSleeping ? (Action)WakePet : SleepPet));
             MenuItem size = new MenuItem { Header = "猫咪大小" };
@@ -485,6 +560,7 @@ namespace PhotoCat
             ApplySize(240, false);
             VerifyLiveTimer(checks);
             VerifyPostures(output, checks);
+            VerifyWalking(output, checks);
             ApplySize(240, false);
             cat.SetPose(new MotionPose());
             Say("喵。陪你待一会儿。", 30);
@@ -609,6 +685,7 @@ namespace PhotoCat
                 Check(changedPixels > 20, "Mouse follows tail silhouette at sway " + sway, checks);
             }
             PetMotion schedule = new PetMotion(42);
+            schedule.SetAutomatic(false);
             bool blinked = false, earMoved = false, tailMoved = false, rested = false;
             double largestStep = 0;
             Point previousTip = new Point(180, 1240);
@@ -642,6 +719,7 @@ namespace PhotoCat
             ApplySize(400, false);
             scene.UpdateLayout();
             schedule = new PetMotion(42);
+            schedule.SetAutomatic(false);
             Stopwatch rendering = Stopwatch.StartNew();
             for (int frame = 0; frame < 90; frame++)
             {
@@ -784,6 +862,142 @@ namespace PhotoCat
                 SaveMotionFrame(Path.Combine(folder, "frame-" + frame.ToString("D3") + ".png"));
             }
             checks.Add("PASS: Rendered 180 WPF frames showing stretching, sleeping and waking");
+        }
+
+        private void VerifyWalking(string output, List<string> checks)
+        {
+            string folder = Path.Combine(output, "walking");
+            Directory.CreateDirectory(folder);
+            timer.Stop(); animate = false; bubble.Visibility = Visibility.Collapsed;
+            ApplySize(400, false); scene.UpdateLayout();
+            for (int frame = 0; frame < 8; frame++)
+            {
+                BitmapSource photo = LoadPhoto("cat-walk-" + frame + ".png");
+                byte[] data = new byte[953 * 1347 * 4]; photo.CopyPixels(data, 953 * 4, 0);
+                int opaque = 0;
+                for (int offset = 0; offset < data.Length; offset += 4)
+                {
+                    if (data[offset + 3] == 255) opaque++;
+                    if (data[offset + 3] == 0 && (data[offset] != 0 || data[offset + 1] != 0 || data[offset + 2] != 0))
+                        throw new InvalidOperationException("Walking asset contains hidden background color");
+                }
+                if (opaque < 100000) throw new InvalidOperationException("Walking asset lost its cat");
+                foreach (bool left in new bool[] { false, true })
+                {
+                    MotionPose pose = new MotionPose { Posture = CatPosture.Walk, WalkFrame = frame, FaceLeft = left };
+                    cat.SetPose(pose);
+                    if (!cat.HasValidSurface()) throw new InvalidOperationException("Walking mesh folded");
+                    SaveMotionFrame(Path.Combine(folder, (left ? "left-" : "right-") + frame + ".png"));
+                    for (int y = 790; y < 1340; y += 79)
+                        for (int x = 20; x < 953; x += 83)
+                        {
+                            Point original = new Point(x + 0.25, y + 0.25);
+                            Point mapped = PhotoMotion.Map(original, pose);
+                            Point local = new Point(mapped.X * cat.ActualWidth / 953, mapped.Y * cat.ActualHeight / 1347);
+                            if ((cat.SourcePoint(local) - original).Length > 0.01
+                                || IsCatPixel(local) != (data[(y * 953 + x) * 4 + 3] >= 30))
+                                throw new InvalidOperationException("Mirrored walking hit-test mismatched the visible silhouette");
+                        }
+                }
+                checks.Add("PASS: Walking frame " + frame + " renders in both directions with matching transparent mouse regions");
+            }
+            PetMotion behavior = new PetMotion(42);
+            behavior.Walk();
+            int previous = 0, changes = 0;
+            for (int i = 0; i < 56; i++)
+            {
+                int frame = behavior.Advance(0.04).WalkFrame;
+                if (frame != previous)
+                {
+                    if (frame != (previous + 1) % 8) throw new InvalidOperationException("Walking skipped or reversed an animation frame");
+                    previous = frame; changes++;
+                }
+            }
+            Check(changes >= 15, "Walking cycles through all eight frames in order and loops", checks);
+            behavior = new PetMotion(21);
+            bool sawWalk = false, sawStretch = false, sawSleep = false, sawWake = false, returned = false;
+            double firstWalk = 0;
+            for (int step = 1; step <= 1000; step++)
+            {
+                MotionPose pose = behavior.Advance(0.1);
+                if (pose.Posture == CatPosture.Walk && !sawWalk) firstWalk = step * 0.1;
+                sawWalk |= pose.Posture == CatPosture.Walk;
+                sawStretch |= pose.Posture == CatPosture.Stretch;
+                sawSleep |= behavior.IsSleeping;
+                sawWake |= behavior.Activity == CatActivity.Waking;
+                returned |= sawWake && pose.Posture == CatPosture.Sit;
+            }
+            Check(behavior.Automatic && firstWalk >= 6 && firstWalk <= 6.2,
+                "Default startup begins walking after about six seconds without user input", checks);
+            Check(sawWalk && sawStretch && sawSleep && sawWake && returned,
+                "Default routine visits walking, sitting, stretching, sleeping and waking within 100 simulated seconds", checks);
+            behavior = new PetMotion(42);
+            behavior.SetAutomatic(false);
+            bool stayed = true;
+            for (int i = 0; i < 3600; i++) stayed &= behavior.Advance(0.1).Posture == CatPosture.Sit;
+            Check(stayed, "Disabling automatic actions keeps the pet in place for six simulated minutes", checks);
+            behavior.SetAutomatic(true);
+            for (int i = 0; i < 32; i++) behavior.Advance(0.1);
+            Check(behavior.Activity == CatActivity.Walking, "Re-enabling automatic actions restarts the routine", checks);
+            behavior.SetAutomatic(false);
+            Check(behavior.Advance(0).Posture == CatPosture.Sit, "Disabling automatic actions immediately stops a walk", checks);
+            behavior.Walk();
+            Check(behavior.Advance(0).Posture == CatPosture.Walk, "Manual walking works with automatic actions disabled", checks);
+            for (int i = 0; i < 90; i++) behavior.Advance(0.1);
+            Check(behavior.Activity == CatActivity.Companion, "A manual walk finishes by itself", checks);
+            behavior.Walk(); behavior.Pet();
+            Check(behavior.Advance(0).Posture == CatPosture.Sit, "Petting stops walking", checks);
+            behavior.Walk(); behavior.AfterDrag();
+            Check(behavior.Advance(0).Posture == CatPosture.Sit, "Finishing a drag stops walking", checks);
+
+            Rect area = new Rect(-12000, -11000, 1400, 1200);
+            Left = -11500; Top = -10800; walkingDirection = 1; walkingRemainder = 0;
+            double origin = Left, level = Top;
+            for (int i = 0; i < 28; i++) AdvanceWalkingPosition(area, 0.04);
+            File.WriteAllText(Path.Combine(folder, "travel.txt"), "actual=" + (Left - origin) + "; expected=" + (PetMotion.WalkStridePixels * petSize / 953) + "; top=" + Top + "; level=" + level);
+            Check(Math.Abs(Left - origin - PetMotion.WalkStridePixels * petSize / 953) < 1 && Top == level,
+                "One gait cycle travels the scaled stride distance without vertical drift", checks);
+            Left = area.Right - Width - 8; walkingDirection = 1;
+            AdvanceWalkingPosition(area, 0.04);
+            Check(walkingDirection == -1 && Left <= area.Right - Width - 8, "Right edge turns the cat left inside the work area", checks);
+            Left = area.Left + 8; walkingDirection = -1;
+            AdvanceWalkingPosition(area, 0.04);
+            Check(walkingDirection == 1 && Left >= area.Left + 8, "Left edge turns the cat right on a negative-coordinate monitor", checks);
+            motion.Walk(); AdvanceWalkingPosition(new Rect(-12000, -11000, 300, 1200), 0.04);
+            Check(motion.Activity == CatActivity.Companion, "A work area too narrow for walking leaves the pet stationary", checks);
+            WalkPet(); timer.Stop();
+            Check(cat.Pose.Posture == CatPosture.Walk, "Walk menu action reaches the pet view", checks);
+            for (int condition = 0; condition < 3; condition++)
+            {
+                animate = condition != 0; moving = condition == 1; menuOpen = condition == 2;
+                MotionPose before = cat.Pose; double x = Left;
+                for (int i = 0; i < 20; i++) { lastTick = clock.Elapsed.TotalSeconds - 0.1; Tick(); }
+                Check(cat.Pose.WalkFrame == before.WalkFrame && Left == x,
+                    new string[] { "Pause freezes gait and travel", "Dragging freezes automatic gait and travel", "An open menu freezes automatic gait and travel" }[condition], checks);
+            }
+            moving = false; menuOpen = false; animate = true;
+            HidePet(); MotionPose hidden = motion.Advance(0);
+            lastTick = clock.Elapsed.TotalSeconds - 60; Tick();
+            Check(!timer.IsEnabled && motion.Advance(0).WalkFrame == hidden.WalkFrame, "Hidden pets do not advance the walking clock", checks);
+            Reveal(); timer.Stop(); animate = false;
+            motion.SetAutomatic(true); ToggleAutomatic();
+            Check(!motion.Automatic && motion.Activity == CatActivity.Companion, "Automatic menu switch disables and stops walking", checks);
+            motion.SetAutomatic(true);
+            // Actual WPF frames for an accelerated demonstration of the available actions.
+            bubble.Visibility = Visibility.Collapsed;
+            behavior = new PetMotion(42);
+            for (int frame = 0; frame < 168; frame++)
+            {
+                if (frame == 24 || frame == 48) behavior.Walk();
+                if (frame == 72) behavior.Stretch();
+                if (frame == 112) behavior.Sleep(true);
+                if (frame == 140) behavior.Wake();
+                MotionPose pose = behavior.Advance(1.0 / 20);
+                pose.FaceLeft = frame >= 48 && frame < 72;
+                cat.SetPose(pose);
+                SaveMotionFrame(Path.Combine(folder, "demo-" + frame.ToString("D3") + ".png"));
+            }
+            checks.Add("PASS: Rendered 168 actual WPF frames of walking in both directions and the other poses");
         }
 
         private static void Check(bool value, string label, List<string> checks)

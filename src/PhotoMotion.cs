@@ -10,13 +10,15 @@ namespace PhotoCat
 {
     // One continuous textured surface keeps the original fur and transparent silhouette.
     // The landmarks below belong to assets/cat.png, a 953 x 1347 photograph cutout.
-    internal enum CatPosture { Sit, Stretch, Rest }
-    internal enum CatActivity { Companion, Stretching, Sleeping, Waking }
+    internal enum CatPosture { Sit, Stretch, Rest, Walk }
+    internal enum CatActivity { Companion, Stretching, Sleeping, Waking, Walking }
 
     internal struct MotionPose
     {
         internal double Blink, LeftEar, RightEar, Tail, Breath, Effort, ClosedEyes;
         internal CatPosture Posture;
+        internal int WalkFrame;
+        internal bool FaceLeft;
     }
 
     internal sealed class PhotoMotion : FrameworkElement
@@ -29,8 +31,10 @@ namespace PhotoCat
         private DrawingGroup closedEyes;
         private readonly Dictionary<CatPosture, Material> materials = new Dictionary<CatPosture, Material>();
         private readonly Dictionary<CatPosture, byte[]> alphaPixels = new Dictionary<CatPosture, byte[]>();
+        private Material[] walkingMaterials;
+        private byte[][] walkingAlpha;
         private MotionPose pose;
-        internal double HeadTop { get { return pose.Posture == CatPosture.Sit ? 56 : pose.Posture == CatPosture.Stretch ? 877 : 959; } }
+        internal double HeadTop { get { return pose.Posture == CatPosture.Sit ? 56 : pose.Posture == CatPosture.Walk ? 812 : pose.Posture == CatPosture.Stretch ? 877 : 959; } }
         internal MotionPose Pose { get { return pose; } }
         internal int VertexCount { get { return rest.Count; } }
 
@@ -90,7 +94,9 @@ namespace PhotoCat
                 throw new InvalidOperationException("Posture photos must share the same canvas");
             byte[] pixels = new byte[bitmap.PixelWidth * bitmap.PixelHeight * 4];
             bitmap.CopyPixels(pixels, bitmap.PixelWidth * 4, 0);
-            alphaPixels[posture] = pixels;
+            byte[] alpha = new byte[bitmap.PixelWidth * bitmap.PixelHeight];
+            for (int i = 0; i < alpha.Length; i++) alpha[i] = pixels[i * 4 + 3];
+            alphaPixels[posture] = alpha;
         }
 
         internal void AddPostures(BitmapSource stretch, BitmapSource restPhoto, BitmapSource sleeping)
@@ -114,12 +120,28 @@ namespace PhotoCat
             materials[CatPosture.Rest] = new DiffuseMaterial(new DrawingBrush(resting));
         }
 
+        internal void AddWalking(BitmapSource[] frames)
+        {
+            if (frames.Length != 8) throw new InvalidOperationException("Walking needs eight registered frames");
+            walkingMaterials = new Material[8];
+            walkingAlpha = new byte[8][];
+            for (int i = 0; i < frames.Length; i++)
+            {
+                SaveAlpha(CatPosture.Walk, frames[i]);
+                walkingAlpha[i] = alphaPixels[CatPosture.Walk];
+                DiffuseMaterial material = new DiffuseMaterial(new ImageBrush(frames[i]));
+                material.Freeze();
+                walkingMaterials[i] = material;
+            }
+        }
+
         internal bool IsPhotoPixel(Point local)
         {
             Point original = SourcePoint(local);
             int x = (int)Math.Floor(original.X), y = (int)Math.Floor(original.Y);
+            byte[] alpha = pose.Posture == CatPosture.Walk ? walkingAlpha[pose.WalkFrame] : alphaPixels[pose.Posture];
             return x >= 0 && y >= 0 && x < source.PixelWidth && y < source.PixelHeight
-                && alphaPixels[pose.Posture][(y * source.PixelWidth + x) * 4 + 3] >= 30;
+                && alpha[y * source.PixelWidth + x] >= 30;
         }
 
         private static List<double> Grid(double end, int step, int detailStart, int detailEnd, int detailStep)
@@ -133,10 +155,11 @@ namespace PhotoCat
 
         internal void SetPose(MotionPose value)
         {
-            if (model.Material != materials[value.Posture])
+            Material material = value.Posture == CatPosture.Walk ? walkingMaterials[value.WalkFrame] : materials[value.Posture];
+            if (model.Material != material)
             {
-                model.Material = materials[value.Posture];
-                model.BackMaterial = materials[value.Posture];
+                model.Material = material;
+                model.BackMaterial = material;
             }
             if (closedEyes != null) closedEyes.Opacity = value.ClosedEyes;
             pose = value;
@@ -163,6 +186,8 @@ namespace PhotoCat
 
         internal static Point Map(Point point, MotionPose value)
         {
+            if (value.Posture == CatPosture.Walk)
+                return value.FaceLeft ? new Point(953 - point.X, point.Y) : point;
             if (value.Posture != CatPosture.Sit) return MapPosture(point, value);
             double x = point.X, y = point.Y;
             double dx = 0, dy = 0;
@@ -262,7 +287,8 @@ namespace PhotoCat
                 Point a = Flat(mesh.Positions[indices[i]]), b = Flat(mesh.Positions[indices[i + 1]]),
                     c = Flat(mesh.Positions[indices[i + 2]]);
                 // Source triangles face clockwise in screen coordinates; no folding or collapsed faces.
-                if (Cross(b - a, c - a) >= -0.0001) return false;
+                double facing = pose.Posture == CatPosture.Walk && pose.FaceLeft ? -1 : 1;
+                if (Cross(b - a, c - a) * facing >= -0.0001) return false;
             }
             return true;
         }
@@ -278,25 +304,83 @@ namespace PhotoCat
         protected override void OnRender(DrawingContext dc) { dc.DrawRectangle(Brushes.Transparent, null, new Rect(RenderSize)); }
     }
 
-    // Motion time advances only while visible and unpaused. Each gesture returns smoothly to rest.
+    // Motion time advances only while visible, unpaused and free of drag/menu interaction.
     internal sealed class PetMotion
     {
+        internal const double WalkCycleSeconds = 1.12;
+        internal const double WalkStridePixels = 110;
         private readonly Random random;
-        private double time, nextBlink, nextEar, nextTail, nextStretch = 18, nextSleep = 110;
+        private readonly Queue<CatActivity> routine = new Queue<CatActivity>();
+        private double time, nextBlink, nextEar, nextTail, nextActivity = 6, walkDuration;
         private double blinkAt = -10, earAt = -10, tailAt = -10, petAt = -10, activityAt, wakingEyes = 1, settlingEyes;
         private bool leftEar, manualSleep;
+        private CatActivity lastAutomatic;
         internal CatActivity Activity { get; private set; }
+        internal bool Automatic { get; private set; }
         internal bool IsSleeping { get { return Activity == CatActivity.Sleeping; } }
         internal PetMotion(int seed)
         {
             random = new Random(seed);
+            Automatic = true;
+            routine.Enqueue(CatActivity.Walking);
+            routine.Enqueue(CatActivity.Stretching);
+            routine.Enqueue(CatActivity.Sleeping);
             nextBlink = 1.8; nextEar = 4; nextTail = 1;
+        }
+        internal void SetAutomatic(bool enabled)
+        {
+            Automatic = enabled;
+            if (!enabled) StopWalking();
+            nextActivity = time + (enabled ? 3 : 8);
         }
         internal void Pet()
         {
             if (IsSleeping) { Wake(); return; }
+            StopWalking();
             if (time - petAt >= 1.5) petAt = time;
-            nextSleep = time + 110;
+            nextActivity = time + 8;
+        }
+        internal void Walk()
+        {
+            if (Activity == CatActivity.Walking) return;
+            Activity = CatActivity.Walking;
+            activityAt = time;
+            walkDuration = 5 + random.NextDouble() * 3;
+        }
+        internal void StopWalking()
+        {
+            if (Activity == CatActivity.Walking) FinishActivity();
+        }
+        internal void AfterDrag()
+        {
+            StopWalking();
+            nextActivity = time + 8;
+        }
+        private void FinishActivity()
+        {
+            Activity = CatActivity.Companion;
+            nextActivity = time + 7 + random.NextDouble() * 6;
+        }
+        private void ChooseActivity()
+        {
+            if (routine.Count == 0)
+            {
+                CatActivity[] choices = { CatActivity.Walking, CatActivity.Stretching, CatActivity.Sleeping };
+                for (int i = choices.Length - 1; i > 0; i--)
+                {
+                    int j = random.Next(i + 1);
+                    CatActivity old = choices[i]; choices[i] = choices[j]; choices[j] = old;
+                }
+                if (choices[0] == lastAutomatic)
+                {
+                    CatActivity old = choices[0]; choices[0] = choices[1]; choices[1] = old;
+                }
+                foreach (CatActivity choice in choices) routine.Enqueue(choice);
+            }
+            lastAutomatic = routine.Dequeue();
+            if (lastAutomatic == CatActivity.Walking) Walk();
+            else if (lastAutomatic == CatActivity.Stretching) Stretch();
+            else Sleep(false);
         }
         internal void Stretch()
         {
@@ -323,24 +407,15 @@ namespace PhotoCat
         {
             time += Math.Max(0, Math.Min(seconds, 0.1));
             double elapsed = time - activityAt;
-            if (Activity == CatActivity.Stretching && elapsed >= 3.2)
-            {
-                Activity = CatActivity.Companion;
-                nextStretch = time + 55 + random.NextDouble() * 40;
-                nextSleep = Math.Max(nextSleep, time + 50);
-            }
+            if ((Activity == CatActivity.Stretching && elapsed >= 3.2)
+                || (Activity == CatActivity.Walking && elapsed >= walkDuration)) FinishActivity();
             if (Activity == CatActivity.Sleeping && !manualSleep && elapsed >= 32) Wake();
-            if (Activity == CatActivity.Waking && time - activityAt >= 1.4)
-            {
-                Stretch();
-                nextSleep = time + 150 + random.NextDouble() * 90;
-            }
-            if (Activity == CatActivity.Companion)
-            {
-                if (time >= nextSleep) Sleep(false);
-                else if (time >= nextStretch) Stretch();
-            }
+            if (Activity == CatActivity.Waking && time - activityAt >= 1.4) Stretch();
+            if (Activity == CatActivity.Companion && Automatic && time >= nextActivity) ChooseActivity();
             elapsed = time - activityAt;
+            if (Activity == CatActivity.Walking)
+                return new MotionPose { Posture = CatPosture.Walk,
+                    WalkFrame = (int)(elapsed / WalkCycleSeconds * 8) % 8 };
             if (Activity == CatActivity.Stretching)
                 return new MotionPose { Posture = CatPosture.Stretch, Effort = Math.Sin(elapsed / 3.2 * Math.PI),
                     Breath = Math.Sin(time * Math.PI * 2 / 4.6) };

@@ -30,7 +30,7 @@ PASS: Tail moves continuously without a jump
 PASS: Petting produces a slow blink and returns to open eyes
 PASS: Repeated petting does not snap closed eyes open
 PASS: Rendered 90 WPF motion frames, including petting and idle actions
-INFO: Mesh vertices = 6000; 90 offscreen frames = 2.25 seconds (not an on-screen FPS measurement)
+INFO: Mesh vertices = 6000; 90 offscreen frames = 2.23 seconds (not an on-screen FPS measurement)
 PASS: Live WPF timer drives motion updates
 PASS: Petting reaches the animated view through the live timer
 PASS: New posture surface remains intact: stretch-start
@@ -55,5 +55,34 @@ PASS: Clicking a sleeping pet starts waking
 PASS: Stretch menu action reaches the pet view
 PASS: Pause freezes the new stretch gesture
 PASS: Rendered 180 WPF frames showing stretching, sleeping and waking
+PASS: Walking frame 0 renders in both directions with matching transparent mouse regions
+PASS: Walking frame 1 renders in both directions with matching transparent mouse regions
+PASS: Walking frame 2 renders in both directions with matching transparent mouse regions
+PASS: Walking frame 3 renders in both directions with matching transparent mouse regions
+PASS: Walking frame 4 renders in both directions with matching transparent mouse regions
+PASS: Walking frame 5 renders in both directions with matching transparent mouse regions
+PASS: Walking frame 6 renders in both directions with matching transparent mouse regions
+PASS: Walking frame 7 renders in both directions with matching transparent mouse regions
+PASS: Walking cycles through all eight frames in order and loops
+PASS: Default startup begins walking after about six seconds without user input
+PASS: Default routine visits walking, sitting, stretching, sleeping and waking within 100 simulated seconds
+PASS: Disabling automatic actions keeps the pet in place for six simulated minutes
+PASS: Re-enabling automatic actions restarts the routine
+PASS: Disabling automatic actions immediately stops a walk
+PASS: Manual walking works with automatic actions disabled
+PASS: A manual walk finishes by itself
+PASS: Petting stops walking
+PASS: Finishing a drag stops walking
+PASS: One gait cycle travels the scaled stride distance without vertical drift
+PASS: Right edge turns the cat left inside the work area
+PASS: Left edge turns the cat right on a negative-coordinate monitor
+PASS: A work area too narrow for walking leaves the pet stationary
+PASS: Walk menu action reaches the pet view
+PASS: Pause freezes gait and travel
+PASS: Dragging freezes automatic gait and travel
+PASS: An open menu freezes automatic gait and travel
+PASS: Hidden pets do not advance the walking clock
+PASS: Automatic menu switch disables and stops walking
+PASS: Rendered 168 actual WPF frames of walking in both directions and the other poses
 PASS: Rendered actual WPF pet view to pet-preview.png
 Not covered: physical mouse input, Windows tray clicks, other Windows computers, mixed-DPI monitors.
