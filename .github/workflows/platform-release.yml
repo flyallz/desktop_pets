@@ -1,0 +1,101 @@
+name: Publish desktop pets beta
+on:
+  workflow_dispatch:
+    inputs:
+      build_run:
+        description: Successful Desktop Pets platform build run ID
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: desktop-pets-beta-release
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      BUILD_RUN: ${{ inputs.build_run }}
+    steps:
+      - name: Verify successful build provenance
+        id: build
+        run: |
+          python - <<'PY'
+          import json, os, re, subprocess
+          run_id = os.environ['BUILD_RUN']
+          if not re.fullmatch(r'\d+', run_id):
+              raise SystemExit('Invalid build run ID')
+          repo = os.environ['GITHUB_REPOSITORY']
+          run = json.loads(subprocess.check_output(['gh', 'api', f'repos/{repo}/actions/runs/{run_id}']))
+          if (run['conclusion'] != 'success' or run['head_branch'] != 'main'
+              or run['path'] != '.github/workflows/platform-build.yml'
+              or run['event'] not in ('push', 'workflow_dispatch')):
+              raise SystemExit('Only successful main platform builds may be published')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              out.write('sha=' + run['head_sha'] + '\n')
+          PY
+      - uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ steps.build.outputs.sha }}
+      - uses: actions/download-artifact@v8.0.1
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.build_run }}
+          pattern: desktop-pets-*
+          path: artifacts
+      - name: Check reports and prepare release files
+        id: package
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib, json, os, re, shutil
+          version = json.loads(Path('platform/package.json').read_text())['version']
+          if not re.fullmatch(r'\d+\.\d+\.\d+-beta\.\d+', version):
+              raise SystemExit('This workflow only publishes explicit beta versions')
+          for runner, platform, arch in [('windows-latest','win32','x64'),('macos-15','darwin','arm64'),('macos-15-intel','darwin','x64')]:
+              folder = Path('artifacts') / ('desktop-pets-' + runner)
+              report = json.loads((folder / 'electron-smoke.json').read_text())
+              required = ['photoRendered','transparentCorner','loaded','alwaysOnTop','sandbox']
+              if report['platform'] != platform or report['arch'] != arch or not all(report.get(k) is True for k in required):
+                  raise SystemExit('Native startup checks failed: ' + runner)
+          mac = Path('artifacts/desktop-pets-macos-15')
+          if not {'arm64','x86_64'}.issubset((mac / 'universal-architectures.txt').read_text().split()):
+              raise SystemExit('Mac universal package does not contain both architectures')
+          out = Path('publish')
+          out.mkdir()
+          checksums = []
+          for runner, suffix in [('windows-latest','win-x64'),('macos-15','mac-universal')]:
+              name = f'DesktopPets-{version}-{suffix}.zip'
+              source = Path('artifacts') / ('desktop-pets-' + runner) / 'release' / name
+              shutil.copy2(source, out / name)
+              with source.open('rb') as stream:
+                  digest = hashlib.file_digest(stream, 'sha256').hexdigest()
+              checksums.append(digest + '  ' + name)
+          (out / 'SHA256SUMS.txt').write_text('\n'.join(checksums) + '\n')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
+              stream.write('tag=v' + version + '\n')
+          PY
+      - name: Publish beta with tested binaries
+        env:
+          TAG: ${{ steps.package.outputs.tag }}
+          BUILD_SHA: ${{ steps.build.outputs.sha }}
+        run: |
+          cat > "$RUNNER_TEMP/notes.md" <<'EOF'
+          照片制作器与 Windows / Mac 桌面伴侣的首个跨平台内测版。
+
+          - Windows：下载 win-x64.zip，完整解压后运行 Desktop Pets Beta.exe，保留旁边的文件。
+          - Mac：下载 mac-universal.zip，同时包含 M 系列与 Intel，要求 macOS 13 或更新。尚未签名或公证，系统可能阻止直接打开，正式发放前仍需完成签名与真机安装验收。
+          - 右键猫咪选择“打开制作器”，用自己的照片制作，保存 .petpack.json 后再通过“导入宠物包”使用。不需要安装开发工具。
+          - 可调整大小、自动动作、休息提醒和专注；自己的完整步态需自行添加动作帧。未接入 AI 新姿态生成、账号、云备份或支付。
+          - 自动去背景需要另行启动本机抠图工具；未配置时可用透明 PNG 或画笔修整。
+
+          Windows、Mac arm64、Mac x64 均通过原生启动检查；Mac 通用二进制已核对两种架构。云端检查不替代朋友真机上的安装、拖动、鼠标穿透与多屏验收。详见源码 platform/README.md 和 docs/platform-verification.md。
+
+          本版宠物包与原 C# Windows v0.4.1 样品不兼容，请使用这里的新客户端。源码附在本页下方，安装包校验值在 SHA256SUMS.txt。
+          EOF
+          gh release create "$TAG" publish/* --repo "$GITHUB_REPOSITORY" --target "$BUILD_SHA" --title "$TAG · 桌宠工坊跨平台内测" --notes-file "$RUNNER_TEMP/notes.md" --prerelease --latest=false --draft
+          gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false
