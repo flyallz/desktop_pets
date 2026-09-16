@@ -10,9 +10,13 @@ namespace PhotoCat
 {
     // One continuous textured surface keeps the original fur and transparent silhouette.
     // The landmarks below belong to assets/cat.png, a 953 x 1347 photograph cutout.
+    internal enum CatPosture { Sit, Stretch, Rest }
+    internal enum CatActivity { Companion, Stretching, Sleeping, Waking }
+
     internal struct MotionPose
     {
-        internal double Blink, LeftEar, RightEar, Tail, Breath;
+        internal double Blink, LeftEar, RightEar, Tail, Breath, Effort, ClosedEyes;
+        internal CatPosture Posture;
     }
 
     internal sealed class PhotoMotion : FrameworkElement
@@ -21,7 +25,12 @@ namespace PhotoCat
         private readonly MeshGeometry3D mesh = new MeshGeometry3D();
         private readonly List<Point> rest = new List<Point>();
         private BitmapSource source;
+        private GeometryModel3D model;
+        private DrawingGroup closedEyes;
+        private readonly Dictionary<CatPosture, Material> materials = new Dictionary<CatPosture, Material>();
+        private readonly Dictionary<CatPosture, byte[]> alphaPixels = new Dictionary<CatPosture, byte[]>();
         private MotionPose pose;
+        internal double HeadTop { get { return pose.Posture == CatPosture.Sit ? 56 : pose.Posture == CatPosture.Stretch ? 877 : 959; } }
         internal MotionPose Pose { get { return pose; } }
         internal int VertexCount { get { return rest.Count; } }
 
@@ -36,6 +45,7 @@ namespace PhotoCat
         internal void SetPhoto(BitmapSource bitmap)
         {
             source = bitmap;
+            SaveAlpha(CatPosture.Sit, bitmap);
             double width = bitmap.PixelWidth, height = bitmap.PixelHeight;
             viewport.Camera = new OrthographicCamera(new Point3D(width / 2, -height / 2, 2000),
                 new Vector3D(0, 0, -1), new Vector3D(0, 1, 0), width);
@@ -68,8 +78,48 @@ namespace PhotoCat
             DiffuseMaterial material = new DiffuseMaterial(photo);
             material.Freeze();
             viewport.Children.Add(new ModelVisual3D { Content = new AmbientLight(Colors.White) });
-            viewport.Children.Add(new ModelVisual3D { Content = new GeometryModel3D(mesh, material) { BackMaterial = material } });
+            materials[CatPosture.Sit] = material;
+            model = new GeometryModel3D(mesh, material) { BackMaterial = material };
+            viewport.Children.Add(new ModelVisual3D { Content = model });
             SetPose(new MotionPose());
+        }
+
+        private void SaveAlpha(CatPosture posture, BitmapSource bitmap)
+        {
+            if (bitmap.PixelWidth != source.PixelWidth || bitmap.PixelHeight != source.PixelHeight)
+                throw new InvalidOperationException("Posture photos must share the same canvas");
+            byte[] pixels = new byte[bitmap.PixelWidth * bitmap.PixelHeight * 4];
+            bitmap.CopyPixels(pixels, bitmap.PixelWidth * 4, 0);
+            alphaPixels[posture] = pixels;
+        }
+
+        internal void AddPostures(BitmapSource stretch, BitmapSource restPhoto, BitmapSource sleeping)
+        {
+            SaveAlpha(CatPosture.Stretch, stretch);
+            SaveAlpha(CatPosture.Rest, restPhoto);
+            DiffuseMaterial stretching = new DiffuseMaterial(new ImageBrush(stretch));
+            stretching.Freeze();
+            materials[CatPosture.Stretch] = stretching;
+            Rect canvas = new Rect(0, 0, source.PixelWidth, source.PixelHeight);
+            DrawingGroup resting = new DrawingGroup();
+            resting.Children.Add(new ImageDrawing(restPhoto, canvas));
+            GeometryGroup eyes = new GeometryGroup();
+            eyes.Children.Add(new EllipseGeometry(new Point(621, 1105), 47, 37));
+            eyes.Children.Add(new EllipseGeometry(new Point(724, 1117), 47, 37));
+            eyes.Freeze();
+            // Only the registered eyelid patches dissolve. The body and its outline stay unchanged.
+            closedEyes = new DrawingGroup { ClipGeometry = eyes, Opacity = 0 };
+            closedEyes.Children.Add(new ImageDrawing(sleeping, canvas));
+            resting.Children.Add(closedEyes);
+            materials[CatPosture.Rest] = new DiffuseMaterial(new DrawingBrush(resting));
+        }
+
+        internal bool IsPhotoPixel(Point local)
+        {
+            Point original = SourcePoint(local);
+            int x = (int)Math.Floor(original.X), y = (int)Math.Floor(original.Y);
+            return x >= 0 && y >= 0 && x < source.PixelWidth && y < source.PixelHeight
+                && alphaPixels[pose.Posture][(y * source.PixelWidth + x) * 4 + 3] >= 30;
         }
 
         private static List<double> Grid(double end, int step, int detailStart, int detailEnd, int detailStep)
@@ -83,6 +133,12 @@ namespace PhotoCat
 
         internal void SetPose(MotionPose value)
         {
+            if (model.Material != materials[value.Posture])
+            {
+                model.Material = materials[value.Posture];
+                model.BackMaterial = materials[value.Posture];
+            }
+            if (closedEyes != null) closedEyes.Opacity = value.ClosedEyes;
             pose = value;
             Point3DCollection positions = new Point3DCollection(rest.Count);
             foreach (Point point in rest)
@@ -107,6 +163,7 @@ namespace PhotoCat
 
         internal static Point Map(Point point, MotionPose value)
         {
+            if (value.Posture != CatPosture.Sit) return MapPosture(point, value);
             double x = point.X, y = point.Y;
             double dx = 0, dy = 0;
             // Chest expansion stays above the paws; neither the head nor the whole photo bobs.
@@ -123,6 +180,25 @@ namespace PhotoCat
             // Closing the eye compresses its iris into the lid line and draws adjacent fur over it.
             dy += Eye(x, y, 444, 230, 0.43, value.Blink);
             dy += Eye(x, y, 550, 233, -0.34, value.Blink);
+            return new Point(x + dx, y + dy);
+        }
+
+        private static Point MapPosture(Point point, MotionPose value)
+        {
+            double x = point.X, y = point.Y, dx = 0, dy = 0;
+            if (value.Posture == CatPosture.Stretch)
+            {
+                double back = Falloff(x - 350, 50, 240) * Falloff(y - 790, 20, 175);
+                double shoulders = Falloff(x - 630, 45, 190) * Falloff(y - 1045, 20, 165);
+                dx = -10 * back * value.Effort + 4 * shoulders * value.Effort;
+                dy = -16 * back * value.Effort + 5 * shoulders * value.Effort - 2 * shoulders * value.Breath;
+            }
+            else
+            {
+                double body = Falloff(x - 405, 80, 365) * Falloff(y - 1055, 30, 195);
+                dy = -3.5 * body * value.Breath;
+                dx = (x - 405) * 0.004 * body * value.Breath;
+            }
             return new Point(x + dx, y + dy);
         }
 
@@ -206,9 +282,11 @@ namespace PhotoCat
     internal sealed class PetMotion
     {
         private readonly Random random;
-        private double time, nextBlink, nextEar, nextTail;
-        private double blinkAt = -10, earAt = -10, tailAt = -10, petAt = -10;
-        private bool leftEar;
+        private double time, nextBlink, nextEar, nextTail, nextStretch = 18, nextSleep = 110;
+        private double blinkAt = -10, earAt = -10, tailAt = -10, petAt = -10, activityAt, wakingEyes = 1, settlingEyes;
+        private bool leftEar, manualSleep;
+        internal CatActivity Activity { get; private set; }
+        internal bool IsSleeping { get { return Activity == CatActivity.Sleeping; } }
         internal PetMotion(int seed)
         {
             random = new Random(seed);
@@ -216,12 +294,60 @@ namespace PhotoCat
         }
         internal void Pet()
         {
-            // Repeated clicks finish the current slow blink instead of snapping the eyes open.
+            if (IsSleeping) { Wake(); return; }
             if (time - petAt >= 1.5) petAt = time;
+            nextSleep = time + 110;
+        }
+        internal void Stretch()
+        {
+            if (Activity == CatActivity.Stretching) return;
+            Activity = CatActivity.Stretching;
+            activityAt = time;
+        }
+        internal void Sleep(bool untilWoken)
+        {
+            if (IsSleeping) return;
+            settlingEyes = Activity == CatActivity.Waking ? wakingEyes * (1 - Smooth((time - activityAt) / 1.1)) : 0;
+            Activity = CatActivity.Sleeping;
+            activityAt = time;
+            manualSleep = untilWoken;
+        }
+        internal void Wake()
+        {
+            if (!IsSleeping) return;
+            wakingEyes = settlingEyes + (1 - settlingEyes) * Smooth((time - activityAt) / 0.9);
+            Activity = CatActivity.Waking;
+            activityAt = time;
         }
         internal MotionPose Advance(double seconds)
         {
             time += Math.Max(0, Math.Min(seconds, 0.1));
+            double elapsed = time - activityAt;
+            if (Activity == CatActivity.Stretching && elapsed >= 3.2)
+            {
+                Activity = CatActivity.Companion;
+                nextStretch = time + 55 + random.NextDouble() * 40;
+                nextSleep = Math.Max(nextSleep, time + 50);
+            }
+            if (Activity == CatActivity.Sleeping && !manualSleep && elapsed >= 32) Wake();
+            if (Activity == CatActivity.Waking && time - activityAt >= 1.4)
+            {
+                Stretch();
+                nextSleep = time + 150 + random.NextDouble() * 90;
+            }
+            if (Activity == CatActivity.Companion)
+            {
+                if (time >= nextSleep) Sleep(false);
+                else if (time >= nextStretch) Stretch();
+            }
+            elapsed = time - activityAt;
+            if (Activity == CatActivity.Stretching)
+                return new MotionPose { Posture = CatPosture.Stretch, Effort = Math.Sin(elapsed / 3.2 * Math.PI),
+                    Breath = Math.Sin(time * Math.PI * 2 / 4.6) };
+            if (Activity == CatActivity.Sleeping || Activity == CatActivity.Waking)
+                return new MotionPose { Posture = CatPosture.Rest,
+                    ClosedEyes = Activity == CatActivity.Sleeping ? settlingEyes + (1 - settlingEyes) * Smooth(elapsed / 0.9) : wakingEyes * (1 - Smooth(elapsed / 1.1)),
+                    Breath = Math.Sin(time * Math.PI * 2 / 6.4) };
             if (time >= nextBlink) { blinkAt = time; nextBlink = time + 3.5 + random.NextDouble() * 4; }
             if (time >= nextEar) { earAt = time; leftEar = random.Next(2) == 0; nextEar = time + 8 + random.NextDouble() * 9; }
             if (time >= nextTail) { tailAt = time; nextTail = time + 8 + random.NextDouble() * 7; }
@@ -236,12 +362,17 @@ namespace PhotoCat
                 Tail = tail, Breath = Math.Sin(time * Math.PI * 2 / 4.6)
             };
         }
+        private static double Smooth(double value)
+        {
+            double t = Math.Max(0, Math.Min(1, value));
+            return t * t * (3 - 2 * t);
+        }
         private static double Pulse(double elapsed, double close, double hold, double open)
         {
             if (elapsed < 0 || elapsed >= close + hold + open) return 0;
             double t = elapsed < close ? elapsed / close : elapsed < close + hold ? 1
                 : 1 - (elapsed - close - hold) / open;
-            return t * t * (3 - 2 * t);
+            return Smooth(t);
         }
     }
 }

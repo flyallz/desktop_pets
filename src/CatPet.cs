@@ -123,6 +123,7 @@ namespace PhotoCat
             pixels = new byte[stride * bitmap.PixelHeight];
             bitmap.CopyPixels(pixels, stride, 0);
             cat.SetPhoto(bitmap);
+            cat.AddPostures(LoadPhoto("cat-stretch.png"), LoadPhoto("cat-rest.png"), LoadPhoto("cat-sleep.png"));
             cat.Cursor = Cursors.Hand;
             RenderOptions.SetBitmapScalingMode(cat, BitmapScalingMode.HighQuality);
             cat.MouseLeftButtonDown += BeginDrag;
@@ -188,15 +189,21 @@ namespace PhotoCat
             return new Point(point.X, point.Y);
         }
 
-        private bool IsCatPixel(Point local)
+        private static BitmapSource LoadPhoto(string name)
         {
-            if (cat.ActualWidth <= 0 || cat.ActualHeight <= 0) return false;
-            Point original = cat.SourcePoint(local);
-            int x = (int)Math.Floor(original.X);
-            int y = (int)Math.Floor(original.Y);
-            return x >= 0 && y >= 0 && x < bitmap.PixelWidth && y < bitmap.PixelHeight
-                && pixels[y * stride + x * 4 + 3] >= 30;
+            using (Stream input = Assembly.GetExecutingAssembly().GetManifestResourceStream("PhotoCat." + name))
+            {
+                if (input == null) throw new InvalidOperationException("Missing posture photo: " + name);
+                BitmapImage image = new BitmapImage();
+                image.BeginInit(); image.CacheOption = BitmapCacheOption.OnLoad; image.StreamSource = input;
+                image.EndInit(); image.Freeze();
+                BitmapSource converted = new FormatConvertedBitmap(image, PixelFormats.Bgra32, null, 0);
+                converted.Freeze();
+                return converted;
+            }
         }
+
+        private bool IsCatPixel(Point local) { return cat.IsPhotoPixel(local); }
 
         private void SetClickThrough(bool value)
         {
@@ -219,6 +226,7 @@ namespace PhotoCat
             double delta = now - lastTick;
             lastTick = now;
             if (animate) cat.SetPose(motion.Advance(delta));
+            PositionBubble();
             if (now > bubbleUntil) bubble.Visibility = Visibility.Collapsed;
             if (!testing && !moving && !menuOpen)
                 SetClickThrough(!IsCatPixel(cat.PointFromScreen(ScreenCursor())));
@@ -258,6 +266,12 @@ namespace PhotoCat
 
         private void Pet()
         {
+            if (animate && motion.IsSleeping)
+            {
+                motion.Wake();
+                Say("睡醒啦，伸个懒腰。", 3);
+                return;
+            }
             string[] replies = { "喵。", "呼噜呼噜…", "陪你待一会儿。" };
             Say(replies[petCount++ % replies.Length], 2.8);
             if (animate) motion.Pet();
@@ -266,8 +280,41 @@ namespace PhotoCat
         private void Say(string text, double seconds)
         {
             message.Text = text;
+            PositionBubble();
             bubble.Visibility = Visibility.Visible;
             bubbleUntil = clock.Elapsed.TotalSeconds + seconds;
+        }
+
+        private void PositionBubble()
+        {
+            Canvas.SetTop(bubble, Math.Max(4, 4 + (cat.HeadTop - 56) * petSize / 953));
+        }
+
+        private void StretchPet()
+        {
+            animate = true;
+            motion.Stretch();
+            lastTick = clock.Elapsed.TotalSeconds;
+            Tick();
+            Say("伸——懒——腰。", 2);
+        }
+
+        private void SleepPet()
+        {
+            animate = true;
+            motion.Sleep(true);
+            lastTick = clock.Elapsed.TotalSeconds;
+            Tick();
+            Say("眯一会儿，轻点我就醒。", 3);
+        }
+
+        private void WakePet()
+        {
+            animate = true;
+            motion.Wake();
+            lastTick = clock.Elapsed.TotalSeconds;
+            Tick();
+            Say("醒啦。", 2);
         }
 
         private void ApplySize(double width, bool keepFeet)
@@ -284,7 +331,7 @@ namespace PhotoCat
             Canvas.SetTop(cat, 48);
             bubble.Width = width - 2;
             Canvas.SetLeft(bubble, 13);
-            Canvas.SetTop(bubble, 4);
+            PositionBubble();
             if (keepFeet) { Top = foot - Height; KeepVisible(); }
         }
 
@@ -334,6 +381,8 @@ namespace PhotoCat
             menu.FontFamily = new FontFamily("Microsoft YaHei UI");
             menu.FontSize = 13;
             menu.Items.Add(MenuAction("摸一摸", Pet));
+            menu.Items.Add(MenuAction("伸个懒腰", StretchPet));
+            menu.Items.Add(MenuAction(motion.IsSleeping ? "叫醒它" : "睡一会儿", motion.IsSleeping ? (Action)WakePet : SleepPet));
             MenuItem size = new MenuItem { Header = "猫咪大小" };
             foreach (double value in new double[] { 180, 240, 320 })
             {
@@ -435,6 +484,8 @@ namespace PhotoCat
             VerifyMotion(output, checks);
             ApplySize(240, false);
             VerifyLiveTimer(checks);
+            VerifyPostures(output, checks);
+            ApplySize(240, false);
             cat.SetPose(new MotionPose());
             Say("喵。陪你待一会儿。", 30);
             scene.UpdateLayout();
@@ -484,7 +535,8 @@ namespace PhotoCat
                 if (rendered[i] >= 240) solid++;
                 if (rendered[i] == 0) clear++;
             }
-            if (solid < rendered.Length / 4 / 5 || clear < rendered.Length / 4 / 20)
+            if (solid < rendered.Length / 4 / (cat.Pose.Posture == CatPosture.Sit ? 5 : 12)
+                || clear < rendered.Length / 4 / 20)
                 throw new InvalidOperationException("Motion frame lost its cat or transparent background");
             PngBitmapEncoder encoder = new PngBitmapEncoder();
             encoder.Frames.Add(BitmapFrame.Create(frame));
@@ -599,6 +651,139 @@ namespace PhotoCat
             }
             checks.Add("PASS: Rendered 90 WPF motion frames, including petting and idle actions");
             checks.Add("INFO: Mesh vertices = " + cat.VertexCount + "; 90 offscreen frames = " + rendering.Elapsed.TotalSeconds.ToString("F2") + " seconds (not an on-screen FPS measurement)");
+        }
+
+        private void VerifyPostures(string output, List<string> checks)
+        {
+            string folder = Path.Combine(output, "postures");
+            Directory.CreateDirectory(folder);
+            timer.Stop(); animate = false;
+            bubble.Visibility = Visibility.Collapsed;
+            ApplySize(640, false); scene.UpdateLayout();
+            MotionPose[] poses = {
+                new MotionPose { Posture = CatPosture.Stretch },
+                new MotionPose { Posture = CatPosture.Stretch, Effort = 1, Breath = 1 },
+                new MotionPose { Posture = CatPosture.Rest },
+                new MotionPose { Posture = CatPosture.Rest, ClosedEyes = 1 },
+                new MotionPose { Posture = CatPosture.Rest, ClosedEyes = 1, Breath = 1 }
+            };
+            string[] names = { "stretch-start", "stretch-full", "lying-awake", "sleeping", "sleep-breath" };
+            byte[] awakePixels = null;
+            for (int i = 0; i < poses.Length; i++)
+            {
+                cat.SetPose(poses[i]);
+                Check(cat.HasValidSurface(), "New posture surface remains intact: " + names[i], checks);
+                byte[] rendered = SaveMotionFrame(Path.Combine(folder, names[i] + ".png"));
+                if (i == 2) awakePixels = rendered;
+                if (i == 3)
+                {
+                    int eyeChanges = 0;
+                    for (int y = 0; y < (int)Math.Ceiling(cat.Height); y++)
+                        for (int x = 0; x < 640; x++)
+                        {
+                            int offset = (y * 640 + x) * 4;
+                            bool different = false;
+                            for (int channel = 0; channel < 4; channel++) different |= rendered[offset + channel] != awakePixels[offset + channel];
+                            if (!different) continue;
+                            if (x < 360 || x > 550 || y < 700 || y > 790)
+                                throw new InvalidOperationException("Waking changed the body outside its eye patches");
+                            eyeChanges++;
+                        }
+                    Check(eyeChanges > 200, "Sleeping closes both eyes without moving or dissolving the body", checks);
+                }
+            }
+            cat.SetPose(new MotionPose { Posture = CatPosture.Rest });
+            Check(!IsCatPixel(new Point(500 * cat.ActualWidth / 953, 250 * cat.ActualHeight / 1347))
+                && IsCatPixel(new Point(670 * cat.ActualWidth / 953, 1135 * cat.ActualHeight / 1347)),
+                "Mouse hit-test switches from sitting silhouette to lying silhouette", checks);
+            foreach (string name in new string[] { "cat-stretch.png", "cat-rest.png", "cat-sleep.png" })
+            {
+                BitmapSource photo = LoadPhoto(name);
+                byte[] data = new byte[953 * 1347 * 4]; photo.CopyPixels(data, 953 * 4, 0);
+                int clear = 0, solid = 0;
+                for (int i = 0; i < data.Length; i += 4)
+                {
+                    if (data[i + 3] == 0)
+                    {
+                        clear++;
+                        if (data[i] != 0 || data[i + 1] != 0 || data[i + 2] != 0)
+                            throw new InvalidOperationException("Hidden background RGB remained in " + name);
+                    }
+                    if (data[i + 3] == 255) solid++;
+                }
+                Check(clear > 200000 && solid > 100000, "Embedded photo has real clean transparency: " + name, checks);
+            }
+            PetMotion behavior = new PetMotion(42);
+            behavior.Stretch();
+            MotionPose last = new MotionPose();
+            bool extended = false;
+            for (int i = 0; i < 90; i++)
+            {
+                last = behavior.Advance(0.04);
+                extended |= last.Posture == CatPosture.Stretch && last.Effort > 0.9;
+            }
+            Check(extended && last.Posture == CatPosture.Sit, "A full stretch completes and returns to sitting", checks);
+            behavior.Sleep(true);
+            for (int i = 0; i < 750; i++) last = behavior.Advance(0.1);
+            Check(behavior.IsSleeping && last.ClosedEyes == 1, "Manual sleep stays asleep until woken", checks);
+            behavior.Pet();
+            bool opened = false, wokeStretch = false;
+            for (int i = 0; i < 140; i++)
+            {
+                last = behavior.Advance(0.04);
+                opened |= last.Posture == CatPosture.Rest && last.ClosedEyes < 0.1;
+                wokeStretch |= last.Posture == CatPosture.Stretch;
+            }
+            Check(opened && wokeStretch && last.Posture == CatPosture.Sit, "Petting wakes the cat, opens its eyes, stretches and returns to sitting", checks);
+            behavior.Sleep(true);
+            for (int i = 0; i < 3; i++) last = behavior.Advance(0.1);
+            behavior.Wake();
+            Check(Math.Abs(behavior.Advance(0).ClosedEyes - last.ClosedEyes) < 0.00001,
+                "Waking during eye closure does not jump to fully shut eyes", checks);
+            last = behavior.Advance(0.1);
+            behavior.Sleep(true);
+            Check(Math.Abs(behavior.Advance(0).ClosedEyes - last.ClosedEyes) < 0.00001,
+                "Returning to sleep during waking keeps the current eyelid position", checks);
+            behavior = new PetMotion(15);
+            bool napped = false, automaticStretch = false, returned = false, automaticWakeOpenedEyes = false;
+            for (int i = 0; i < 3600; i++)
+            {
+                last = behavior.Advance(0.1);
+                napped |= behavior.IsSleeping;
+                automaticWakeOpenedEyes |= behavior.Activity == CatActivity.Waking && last.ClosedEyes < 0.1;
+                automaticStretch |= last.Posture == CatPosture.Stretch;
+                returned |= napped && last.Posture == CatPosture.Sit;
+                cat.SetPose(last);
+                if (!cat.HasValidSurface()) throw new InvalidOperationException("An automatic activity folded its surface");
+            }
+            Check(napped && automaticStretch && returned && automaticWakeOpenedEyes,
+                "Six-minute simulated routine includes stretching, a short nap and opening eyes before waking", checks);
+            ApplySize(240, false); scene.UpdateLayout();
+            SleepPet();
+            Check(motion.IsSleeping && cat.Pose.Posture == CatPosture.Rest, "Sleep menu action reaches the pet view", checks);
+            HidePet(); Reveal(); timer.Stop();
+            Check(motion.IsSleeping, "Hiding and showing preserve sleep state", checks);
+            Pet();
+            Check(motion.Activity == CatActivity.Waking, "Clicking a sleeping pet starts waking", checks);
+            StretchPet();
+            Check(cat.Pose.Posture == CatPosture.Stretch, "Stretch menu action reaches the pet view", checks);
+            animate = false;
+            MotionPose frozen = cat.Pose;
+            Tick();
+            Check(cat.Pose.Posture == frozen.Posture && cat.Pose.Effort == frozen.Effort,
+                "Pause freezes the new stretch gesture", checks);
+            // Export a short actual-WPF demonstration of every newly requested behavior.
+            ApplySize(400, false); scene.UpdateLayout(); bubble.Visibility = Visibility.Collapsed;
+            behavior = new PetMotion(42);
+            for (int frame = 0; frame < 180; frame++)
+            {
+                if (frame == 9) behavior.Stretch();
+                if (frame == 54) behavior.Sleep(true);
+                if (frame == 108) behavior.Pet();
+                cat.SetPose(behavior.Advance(1.0 / 12));
+                SaveMotionFrame(Path.Combine(folder, "frame-" + frame.ToString("D3") + ".png"));
+            }
+            checks.Add("PASS: Rendered 180 WPF frames showing stretching, sleeping and waking");
         }
 
         private static void Check(bool value, string label, List<string> checks)

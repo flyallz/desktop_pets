@@ -30,8 +30,30 @@ PASS: Tail moves continuously without a jump
 PASS: Petting produces a slow blink and returns to open eyes
 PASS: Repeated petting does not snap closed eyes open
 PASS: Rendered 90 WPF motion frames, including petting and idle actions
-INFO: Mesh vertices = 6000; 90 offscreen frames = 2.27 seconds (not an on-screen FPS measurement)
+INFO: Mesh vertices = 6000; 90 offscreen frames = 2.25 seconds (not an on-screen FPS measurement)
 PASS: Live WPF timer drives motion updates
 PASS: Petting reaches the animated view through the live timer
+PASS: New posture surface remains intact: stretch-start
+PASS: New posture surface remains intact: stretch-full
+PASS: New posture surface remains intact: lying-awake
+PASS: New posture surface remains intact: sleeping
+PASS: Sleeping closes both eyes without moving or dissolving the body
+PASS: New posture surface remains intact: sleep-breath
+PASS: Mouse hit-test switches from sitting silhouette to lying silhouette
+PASS: Embedded photo has real clean transparency: cat-stretch.png
+PASS: Embedded photo has real clean transparency: cat-rest.png
+PASS: Embedded photo has real clean transparency: cat-sleep.png
+PASS: A full stretch completes and returns to sitting
+PASS: Manual sleep stays asleep until woken
+PASS: Petting wakes the cat, opens its eyes, stretches and returns to sitting
+PASS: Waking during eye closure does not jump to fully shut eyes
+PASS: Returning to sleep during waking keeps the current eyelid position
+PASS: Six-minute simulated routine includes stretching, a short nap and opening eyes before waking
+PASS: Sleep menu action reaches the pet view
+PASS: Hiding and showing preserve sleep state
+PASS: Clicking a sleeping pet starts waking
+PASS: Stretch menu action reaches the pet view
+PASS: Pause freezes the new stretch gesture
+PASS: Rendered 180 WPF frames showing stretching, sleeping and waking
 PASS: Rendered actual WPF pet view to pet-preview.png
 Not covered: physical mouse input, Windows tray clicks, other Windows computers, mixed-DPI monitors.

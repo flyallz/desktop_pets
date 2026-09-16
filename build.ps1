@@ -9,6 +9,11 @@ New-Item -ItemType Directory -Path $output -Force | Out-Null
 $references = @('System.dll', 'System.Core.dll', 'System.Drawing.dll', 'System.Windows.Forms.dll', 'WPF\WindowsBase.dll', 'WPF\PresentationCore.dll', 'WPF\PresentationFramework.dll', 'System.Xaml.dll')
 $arguments = @('/nologo', '/target:winexe', '/platform:x64', '/optimize+', '/codepage:65001', ('/out:' + (Join-Path $output '猫咪桌宠.exe')), ('/resource:' + $asset + ',PhotoCat.cat.png'), ('/win32manifest:' + (Join-Path $sampleRoot 'src\app.manifest')))
 foreach ($reference in $references) { $arguments += '/reference:' + (Join-Path $framework $reference) }
+foreach ($pose in @('stretch', 'rest', 'sleep')) {
+    $photo = Join-Path $sampleRoot ('assets\cat-' + $pose + '.png')
+    if (-not (Test-Path -LiteralPath $photo)) { throw ('Missing posture photo: ' + $photo) }
+    $arguments += '/resource:' + $photo + ',PhotoCat.cat-' + $pose + '.png'
+}
 $arguments += '/win32icon:' + (Join-Path $sampleRoot 'assets\cat.ico')
 $arguments += Join-Path $sampleRoot 'src\CatPet.cs'
 $arguments += Join-Path $sampleRoot 'src\PhotoMotion.cs'
