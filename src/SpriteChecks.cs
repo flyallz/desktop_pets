@@ -75,6 +75,33 @@ namespace PhotoCat
                 }
                 Check(true, "Every " + ((SpriteAction)row).ToString() + " frame renders unclipped with real alpha, correct mouse hits and fixed window size", checks);
             }
+            for (int row = 0; row < SpriteAtlas.Counts.Length; row++)
+            {
+                HashSet<BitmapSource> displayed = new HashSet<BitmapSource>();
+                for (int frame = 0; frame < SpriteAtlas.DisplayCount(row); frame++)
+                {
+                    MotionPose pose = new MotionPose { Sprite = (SpriteAction)row,
+                        Posture = row == 1 || row == 2 ? CatPosture.Walk : CatPosture.Sit,
+                        FaceLeft = row == 2, WalkFrame = frame / SpriteAtlas.Steps[row],
+                        SpriteFrame = frame / SpriteAtlas.Steps[row],
+                        SpriteTween = (frame % SpriteAtlas.Steps[row] + 0.001) / SpriteAtlas.Steps[row] };
+                    BitmapSource image = cat.Sprites.Frame(pose);
+                    displayed.Add(image);
+                    byte[] pixels = new byte[192 * 208 * 4]; image.CopyPixels(pixels, 192 * 4, 0);
+                    cat.SetPose(pose);
+                    for (int y = 5; y < 208; y += 13)
+                        for (int x = 5; x < 192; x += 13)
+                        {
+                            Rect r = SpriteAtlas.CanvasRect;
+                            Point local = new Point((r.X + (x + 0.5) * r.Width / 192) * cat.ActualWidth / 953,
+                                (r.Y + (y + 0.5) * r.Height / 208) * cat.ActualHeight / 1347);
+                            if (cat.IsPhotoPixel(local) != (pixels[(y * 192 + x) * 4 + 3] >= 30))
+                                throw new InvalidOperationException("An interpolated silhouette disagrees with mouse hit-testing.");
+                        }
+                }
+                Check(displayed.Count == SpriteAtlas.DisplayCount(row), "All continuous " + ((SpriteAction)row)
+                    + " frames are reachable with matching alpha hits (" + displayed.Count + " frames)", checks);
+            }
             MotionPose left = new MotionPose { Posture = CatPosture.Walk, FaceLeft = true, WalkFrame = 3 };
             MotionPose right = new MotionPose { Posture = CatPosture.Walk, FaceLeft = false, WalkFrame = 3 };
             Check(cat.Sprites.ActionFor(left) == SpriteAction.WalkLeft && cat.Sprites.ActionFor(right) == SpriteAction.WalkRight
@@ -176,8 +203,49 @@ namespace PhotoCat
             try { Dispatcher.PushFrame(loop); }
             finally { finish.Stop(); timer.Stop(); timer.Tick -= observe; animate = false; }
             Check(liveFrames.Count == 4, "The live WPF timer visibly advances the new gesture frames (ticks=" + liveTicks + ", frames=" + liveFrames.Count + ", visible=" + IsVisible + ", activity=" + motion.Activity + ")", checks);
+            VerifySpriteRenderClock(folder, checks);
             motion.ReturnToCompanion(); cat.SetPose(motion.Advance(0));
             SaveElement(scene, (int)Math.Ceiling(Width), (int)Math.Ceiling(Height), Path.Combine(folder, "desktop-pet.png"));
+        }
+        private void VerifySpriteRenderClock(string folder, List<string> checks)
+        {
+            List<double> intervals = new List<double>();
+            HashSet<int> frames = new HashSet<int>();
+            int ticks = 0;
+            TimeSpan previous = TimeSpan.MinValue;
+            DispatcherFrame loop = new DispatcherFrame();
+            DispatcherTimer finish = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2.5) };
+            finish.Tick += delegate { loop.Continue = false; };
+            EventHandler observe = delegate(object sender, EventArgs args)
+            {
+                TimeSpan time = ((RenderingEventArgs)args).RenderingTime;
+                if (time == previous) return;
+                if (previous != TimeSpan.MinValue) intervals.Add((time - previous).TotalMilliseconds);
+                previous = time; ticks++;
+                if (cat.Pose.Posture == CatPosture.Walk) frames.Add(cat.Sprites.FrameFor(cat.Pose));
+            };
+            double start = Left;
+            verifyingRenderClock = true;
+            motion.ReturnToCompanion(); motion.SetAutomatic(false);
+            WalkPet();
+            CompositionTarget.Rendering += observe;
+            finish.Start();
+            try { Dispatcher.PushFrame(loop); }
+            finally { finish.Stop(); CompositionTarget.Rendering -= observe; verifyingRenderClock = false; animate = false; }
+            intervals.Sort();
+            double median = intervals.Count == 0 ? 0 : intervals[intervals.Count / 2];
+            double p95 = intervals.Count == 0 ? 0 : intervals[(int)((intervals.Count - 1) * 0.95)];
+            Check(ticks >= 35 && frames.Count >= 24, "Display clock advances continuous walking (ticks=" + ticks
+                + ", distinct frames=" + frames.Count + ", median ms=" + median.ToString("F2") + ", p95 ms=" + p95.ToString("F2") + ")", checks);
+            Check(Math.Abs(Left - start) > 5, "The display clock moves the real desktop window together with the gait", checks);
+            motion.ReturnToCompanion(); motion.SetAutomatic(false);
+            for (int i = 0; i < 96; i++)
+            {
+                MotionPose pose = new MotionPose { Posture = CatPosture.Walk, WalkFrame = (i / 4) % 8, SpriteTween = (i % 4) / 4.0 };
+                cat.SetPose(pose);
+                SaveSpriteFrame(Path.Combine(folder, "smooth-walk-" + i.ToString("D3") + ".png"));
+            }
+            Check(true, "Rendered three complete 32-frame walking cycles for visual inspection", checks);
         }
     }
 }

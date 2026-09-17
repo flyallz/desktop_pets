@@ -43,7 +43,7 @@ namespace PhotoCat
             for (int i = 0; i < choices.GetLength(0); i++)
                 if (Array.IndexOf(resources, "PhotoCat.looks." + choices[i, 0] + ".png") >= 0)
                     looks.Add(new PhotoLook(choices[i, 0], choices[i, 1], LoadPhoto("looks." + choices[i, 0] + ".png")));
-            cat.LoadSpriteAtlas(LoadPhoto("sprites.cat-spritesheet.png"));
+            cat.LoadSpriteAtlas(LoadPhoto("sprites.cat-spritesheet.png"), LoadPhoto);
             looks.Add(new PhotoLook("animated", "动作版 · 9组新动作", cat.SpriteIdlePhoto));
             photoStore = new UserPhotoStore(UserPhotoStore.DefaultFolder);
             if (!testing)

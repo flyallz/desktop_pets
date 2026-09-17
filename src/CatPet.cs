@@ -16,8 +16,8 @@ using System.Windows.Threading;
 using Forms = System.Windows.Forms;
 using Drawing = System.Drawing;
 
-[assembly: AssemblyVersion("0.4.5.0")]
-[assembly: AssemblyFileVersion("0.4.5.0")]
+[assembly: AssemblyVersion("0.4.6.0")]
+[assembly: AssemblyFileVersion("0.4.6.0")]
 
 namespace PhotoCat
 {
@@ -109,7 +109,7 @@ namespace PhotoCat
         public PetWindow(bool selfTest)
         {
             testing = selfTest;
-            Title = "猫咪桌宠 · v0.4.5";
+            Title = "猫咪桌宠 · v0.4.6";
             WindowStyle = WindowStyle.None;
             ResizeMode = ResizeMode.NoResize;
             AllowsTransparency = true;
@@ -194,12 +194,14 @@ namespace PhotoCat
             Closed += delegate
             {
                 timer.Stop();
+                CompositionTarget.Rendering -= RenderSprites;
                 CloseCompanion();
                 if (tray != null) { tray.Visible = false; tray.Dispose(); }
             };
             timer = new DispatcherTimer(DispatcherPriority.Background);
             timer.Interval = TimeSpan.FromMilliseconds(40);
-            timer.Tick += delegate { Tick(); };
+            timer.Tick += delegate { if (!UseSpriteRenderClock) Tick(); };
+            CompositionTarget.Rendering += RenderSprites;
             timer.Start();
         }
 
@@ -251,7 +253,7 @@ namespace PhotoCat
                 MotionPose pose = motion.Advance(delta);
                 if (pose.Posture == CatPosture.Walk || motion.WalkDistance > 0)
                 {
-                    if (!testing)
+                    if (!testing || verifyingRenderClock)
                     {
                         Rect area = CurrentWorkArea();
                         if (cat.Pose.Posture != CatPosture.Walk)

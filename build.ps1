@@ -25,6 +25,11 @@ foreach ($photo in Get-ChildItem -LiteralPath (Join-Path $sampleRoot 'assets\loo
 $spriteAtlas = Join-Path $sampleRoot 'assets\sprites\cat-spritesheet.png'
 if (-not (Test-Path -LiteralPath $spriteAtlas)) { throw 'Missing cat sprite atlas' }
 $arguments += '/resource:' + $spriteAtlas + ',PhotoCat.sprites.cat-spritesheet.png'
+foreach ($name in @('idle','walk-right','walk-left','wave','stretch','groom','look','lie-down','sleep')) {
+    $strip = Join-Path $sampleRoot ('assets\sprites\smooth\' + $name + '.png')
+    if (-not (Test-Path -LiteralPath $strip)) { throw ('Missing smooth animation: ' + $strip) }
+    $arguments += '/resource:' + $strip + ',PhotoCat.sprites.smooth.' + $name + '.png'
+}
 $arguments += '/resource:' + (Join-Path $sampleRoot 'src\PhotoEditor.xaml') + ',PhotoCat.PhotoEditor.xaml'
 $photoTools = Join-Path $sampleRoot '.build\photo-tools.zip'
 if (Test-Path -LiteralPath $photoTools) {

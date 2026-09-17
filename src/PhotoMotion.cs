@@ -20,6 +20,7 @@ namespace PhotoCat
         internal int WalkFrame;
         internal SpriteAction Sprite;
         internal int SpriteFrame;
+        internal double SpriteTween;
         internal bool FaceLeft;
     }
 
@@ -210,6 +211,7 @@ namespace PhotoCat
             mesh.Positions = positions;
         }
 
+
         private static double Smooth(double value)
         {
             double t = Math.Max(0, Math.Min(1, value));
@@ -361,7 +363,7 @@ namespace PhotoCat
         internal bool IsTurning { get { return Activity == CatActivity.Walking && turnPause > 0; } }
         private double blinkAt = -10, earAt = -10, tailAt = -10, petAt = -10, activityAt, wakingEyes = 1, settlingEyes;
         private bool leftEar, manualSleep;
-        private int wakingSpriteFrame = 5;
+        private double wakingSpritePosition = 5;
         private CatActivity lastAutomatic;
         internal CatActivity Activity { get; private set; }
         internal bool Automatic { get; private set; }
@@ -505,7 +507,7 @@ namespace PhotoCat
         internal void Wake()
         {
             if (!IsSleeping) return;
-            wakingSpriteFrame = Math.Min(5, (int)((time - activityAt) / 1.5 * 6));
+            wakingSpritePosition = Math.Min(5, (time - activityAt) / 1.5 * 6);
             wakingEyes = settlingEyes + (1 - settlingEyes) * Smooth((time - activityAt) / 0.9);
             Activity = CatActivity.Waking;
             activityAt = time;
@@ -537,24 +539,29 @@ namespace PhotoCat
             if (Activity == CatActivity.Companion && Automatic && time >= nextActivity) ChooseActivity();
             elapsed = time - activityAt;
             if (Activity == CatActivity.Walking)
+            {
+                double step = WalkingProgress(walkingTime) / WalkCycleSeconds * 8;
                 return new MotionPose { Posture = CatPosture.Walk,
-                    WalkFrame = (int)(WalkingProgress(walkingTime) / WalkCycleSeconds * 8) % 8, Sprite = SpriteAction.WalkRight };
+                    WalkFrame = (int)step % 8, SpriteTween = Fraction(step), Sprite = SpriteAction.WalkRight };
+            }
             if (Activity == CatActivity.Stretching)
-                return new MotionPose { Posture = CatPosture.Stretch, Sprite = SpriteAction.Stretch, SpriteFrame = Math.Min(4, (int)(elapsed / 3.2 * 5)), Effort = Math.Sin(elapsed / 3.2 * Math.PI),
+                return new MotionPose { Posture = CatPosture.Stretch, Sprite = SpriteAction.Stretch, SpriteFrame = Math.Min(4, (int)(elapsed / 3.2 * 5)), SpriteTween = Fraction(elapsed / 3.2 * 5), Effort = Math.Sin(elapsed / 3.2 * Math.PI),
                     Breath = Math.Sin(time * Math.PI * 2 / 4.6) };
             if (Activity == CatActivity.Sleeping || Activity == CatActivity.Waking)
                 return new MotionPose { Posture = CatPosture.Rest,
                     Sprite = Activity == CatActivity.Waking || elapsed < 1.5 ? SpriteAction.LieDown : SpriteAction.Sleep,
-                    SpriteFrame = Activity == CatActivity.Waking ? Math.Max(0, wakingSpriteFrame - (int)(elapsed / 1.4 * (wakingSpriteFrame + 1)))
+                    SpriteFrame = Activity == CatActivity.Waking ? (int)Math.Max(0, wakingSpritePosition * (1 - elapsed / 1.4))
                         : elapsed < 1.5 ? Math.Min(5, (int)(elapsed / 1.5 * 6)) : (int)((elapsed - 1.5) * 2) % 6,
+                    SpriteTween = Activity == CatActivity.Waking ? Fraction(Math.Max(0, wakingSpritePosition * (1 - elapsed / 1.4)))
+                        : Fraction(elapsed < 1.5 ? elapsed / 1.5 * 6 : (elapsed - 1.5) * 2),
                     ClosedEyes = Activity == CatActivity.Sleeping ? settlingEyes + (1 - settlingEyes) * Smooth(elapsed / 0.9) : wakingEyes * (1 - Smooth(elapsed / 1.1)),
                     Breath = Math.Sin(time * Math.PI * 2 / 6.4) };
             if (Activity == CatActivity.Waving)
-                return new MotionPose { Sprite = SpriteAction.Wave, SpriteFrame = Math.Min(3, (int)(elapsed / 2.4 * 4)) };
+                return new MotionPose { Sprite = SpriteAction.Wave, SpriteFrame = Math.Min(3, (int)(elapsed / 2.4 * 4)), SpriteTween = Fraction(elapsed / 2.4 * 4) };
             if (Activity == CatActivity.Grooming)
-                return new MotionPose { Sprite = SpriteAction.Groom, SpriteFrame = Math.Min(7, (int)(elapsed / 4 * 8)) };
+                return new MotionPose { Sprite = SpriteAction.Groom, SpriteFrame = Math.Min(7, (int)(elapsed / 4 * 8)), SpriteTween = Fraction(elapsed / 4 * 8) };
             if (Activity == CatActivity.Looking)
-                return new MotionPose { Sprite = SpriteAction.Look, SpriteFrame = Math.Min(5, (int)(elapsed / 3 * 6)) };
+                return new MotionPose { Sprite = SpriteAction.Look, SpriteFrame = Math.Min(5, (int)(elapsed / 3 * 6)), SpriteTween = Fraction(elapsed / 3 * 6) };
             if (time >= nextBlink) { blinkAt = time; nextBlink = time + 3.5 + random.NextDouble() * 4; }
             if (time >= nextEar) { earAt = time; leftEar = random.Next(2) == 0; nextEar = time + 8 + random.NextDouble() * 9; }
             if (time >= nextTail) { tailAt = time; nextTail = time + 8 + random.NextDouble() * 7; }
@@ -568,12 +575,15 @@ namespace PhotoCat
                 : blinkElapsed >= 0 && blinkElapsed < 0.9 ? Math.Min(5, (int)(blinkElapsed / 0.9 * 6)) : 0;
             return new MotionPose {
                 Sprite = SpriteAction.Idle, SpriteFrame = idleFrame,
+                SpriteTween = petElapsed >= 0 && petElapsed < 1.5 ? Fraction(petElapsed / 1.5 * 6)
+                    : blinkElapsed >= 0 && blinkElapsed < 0.9 ? Fraction(blinkElapsed / 0.9 * 6) : 0,
                 Blink = Math.Max(Pulse(time - blinkAt, 0.10, 0.04, 0.18),
                     0.94 * Pulse(time - petAt, 0.42, 0.36, 0.72)),
                 LeftEar = leftEar ? twitch : 0, RightEar = leftEar ? 0 : twitch,
                 Tail = tail, Breath = Math.Sin(time * Math.PI * 2 / 4.6)
             };
         }
+        private static double Fraction(double value) { return value - Math.Floor(value); }
         private static double Smooth(double value)
         {
             double t = Math.Max(0, Math.Min(1, value));

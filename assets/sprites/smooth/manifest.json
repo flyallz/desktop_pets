@@ -1,0 +1,90 @@
+{
+  "source": "../cat-spritesheet.png",
+  "method": "Bidirectional DIS flow, smooth displacement, premultiplied color and signed-distance alpha",
+  "frameWidth": 192,
+  "frameHeight": 208,
+  "columns": 8,
+  "actions": [
+    {
+      "name": "idle",
+      "keyframes": 6,
+      "steps": 4,
+      "frames": 24,
+      "loop": true,
+      "maxFrameDifference": 3.7542,
+      "originalMaxDifference": 11.5461
+    },
+    {
+      "name": "walk-right",
+      "keyframes": 8,
+      "steps": 4,
+      "frames": 32,
+      "loop": true,
+      "maxFrameDifference": 7.9234,
+      "originalMaxDifference": 19.3854
+    },
+    {
+      "name": "walk-left",
+      "keyframes": 8,
+      "steps": 4,
+      "frames": 32,
+      "loop": true,
+      "maxFrameDifference": 7.1342,
+      "originalMaxDifference": 20.5158
+    },
+    {
+      "name": "wave",
+      "keyframes": 4,
+      "steps": 16,
+      "frames": 49,
+      "loop": false,
+      "maxFrameDifference": 1.826,
+      "originalMaxDifference": 10.0915
+    },
+    {
+      "name": "stretch",
+      "keyframes": 5,
+      "steps": 20,
+      "frames": 81,
+      "loop": false,
+      "maxFrameDifference": 4.336,
+      "originalMaxDifference": 33.2627
+    },
+    {
+      "name": "groom",
+      "keyframes": 8,
+      "steps": 16,
+      "frames": 113,
+      "loop": false,
+      "maxFrameDifference": 2.5597,
+      "originalMaxDifference": 17.065
+    },
+    {
+      "name": "look",
+      "keyframes": 6,
+      "steps": 16,
+      "frames": 81,
+      "loop": false,
+      "maxFrameDifference": 2.7967,
+      "originalMaxDifference": 22.0873
+    },
+    {
+      "name": "lie-down",
+      "keyframes": 6,
+      "steps": 8,
+      "frames": 41,
+      "loop": false,
+      "maxFrameDifference": 5.2307,
+      "originalMaxDifference": 20.548
+    },
+    {
+      "name": "sleep",
+      "keyframes": 6,
+      "steps": 16,
+      "frames": 96,
+      "loop": true,
+      "maxFrameDifference": 1.334,
+      "originalMaxDifference": 7.2203
+    }
+  ]
+}

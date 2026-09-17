@@ -14,23 +14,30 @@ namespace PhotoCat
     {
         internal const int FrameWidth = 192, FrameHeight = 208;
         internal static readonly int[] Counts = { 6, 8, 8, 4, 5, 8, 6, 6, 6 };
+        internal static readonly int[] Steps = { 4, 4, 4, 16, 20, 16, 16, 8, 16 };
+        private static readonly string[] Names = { "idle", "walk-right", "walk-left", "wave", "stretch", "groom", "look", "lie-down", "sleep" };
+        internal static int DisplayCount(int row) { return (row <= 2 || row == 8) ? Counts[row] * Steps[row] : (Counts[row] - 1) * Steps[row] + 1; }
         private readonly BitmapSource[][] frames = new BitmapSource[9][];
         private readonly byte[][][] alpha = new byte[9][][];
         private readonly int[][] top = new int[9][];
         internal static readonly Rect CanvasRect = new Rect(0, 1291 - 196 * 953.0 / 192, 953, 208 * 953.0 / 192);
 
-        internal SpriteAtlas(BitmapSource image)
+        internal SpriteAtlas(BitmapSource image, Func<string, BitmapSource> load)
         {
             if (image.PixelWidth != 1536 || image.PixelHeight != 1872)
                 throw new InvalidDataException("The cat sprite atlas must be 1536 x 1872.");
             for (int row = 0; row < Counts.Length; row++)
             {
-                frames[row] = new BitmapSource[Counts[row]];
-                alpha[row] = new byte[Counts[row]][];
-                top[row] = new int[Counts[row]];
-                for (int col = 0; col < Counts[row]; col++)
+                BitmapSource strip = load("sprites.smooth." + Names[row] + ".png");
+                int count = DisplayCount(row);
+                if (strip.PixelWidth != 8 * FrameWidth || strip.PixelHeight != ((count + 7) / 8) * FrameHeight)
+                    throw new InvalidDataException("Invalid transition strip for " + Names[row]);
+                frames[row] = new BitmapSource[count];
+                alpha[row] = new byte[count][];
+                top[row] = new int[count];
+                for (int col = 0; col < count; col++)
                 {
-                    BitmapSource frame = new CroppedBitmap(image, new Int32Rect(col * FrameWidth, row * FrameHeight, FrameWidth, FrameHeight));
+                    BitmapSource frame = new CroppedBitmap(strip, new Int32Rect((col % 8) * FrameWidth, (col / 8) * FrameHeight, FrameWidth, FrameHeight));
                     frame.Freeze();
                     frames[row][col] = frame;
                     byte[] pixels = new byte[FrameWidth * FrameHeight * 4];
@@ -59,7 +66,7 @@ namespace PhotoCat
         {
             int row = (int)ActionFor(pose);
             int index = pose.Posture == CatPosture.Walk ? pose.WalkFrame : pose.SpriteFrame;
-            return Math.Max(0, Math.Min(Counts[row] - 1, index));
+            return Math.Max(0, Math.Min(DisplayCount(row) - 1, index * Steps[row] + (int)(Math.Max(0, Math.Min(0.999999, pose.SpriteTween)) * Steps[row])));
         }
         internal BitmapSource Frame(MotionPose pose) { return frames[(int)ActionFor(pose)][FrameFor(pose)]; }
         internal double HeadTop(MotionPose pose) { return CanvasRect.Y + top[(int)ActionFor(pose)][FrameFor(pose)] * 953.0 / FrameWidth; }
@@ -87,7 +94,7 @@ namespace PhotoCat
         private bool spriteMode;
         internal bool SpriteMode { get { return spriteMode; } }
         internal SpriteAtlas Sprites { get { return sprites; } }
-        internal void LoadSpriteAtlas(BitmapSource image) { sprites = new SpriteAtlas(image); }
+        internal void LoadSpriteAtlas(BitmapSource image, Func<string, BitmapSource> load) { sprites = new SpriteAtlas(image, load); }
         internal BitmapSource SpriteIdlePhoto { get { return sprites.IdlePhoto(); } }
         internal void SetSpriteMode(bool enabled)
         {
@@ -107,6 +114,17 @@ namespace PhotoCat
 
     internal sealed partial class PetWindow
     {
+        private bool verifyingRenderClock;
+        private TimeSpan lastCompositionTime = TimeSpan.MinValue;
+        private bool UseSpriteRenderClock { get { return cat.SpriteMode && (!testing || verifyingRenderClock); } }
+        private void RenderSprites(object sender, EventArgs args)
+        {
+            if (!UseSpriteRenderClock) return;
+            System.Windows.Media.RenderingEventArgs frame = (System.Windows.Media.RenderingEventArgs)args;
+            if (frame.RenderingTime == lastCompositionTime) return;
+            lastCompositionTime = frame.RenderingTime;
+            Tick();
+        }
         private bool SpriteLook { get { return looks.Count > 0 && looks[selectedLook].Id == "animated"; } }
         private void SpriteGesture(SpriteAction action)
         {
