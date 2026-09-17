@@ -1,0 +1,24 @@
+生成方式：内置 imagegen。参考：朋友的猫咪照片及用户提供的狗狗动作图布局。
+
+Create a photorealistic desktop-pet SPRITE SHEET of the user's own CAT.
+
+REFERENCE ROLES:
+The newest image is an in-memory three-panel photographic identity reference board showing THE SAME CAT in three poses. Use ONLY that cat as the animal identity. The previous user image is a white DOG sprite sheet: use it ONLY for sprite-grid organization and sequential animation layout. Do not depict a dog or copy dog anatomy.
+
+Cat identity must stay recognizable: plump long-haired silver-white cat, broad round face, green eyes with dark rims, small pink-brown nose, triangular ears, pale gray tabby forehead stripes and leg stripes, thick white cheek/chest ruff, large fluffy silver-gray tail. Preserve the cat's slightly serious face and facial proportions. Real natural fur, photographic cutout appearance, no cartoon stylization, no accessories, no clothes.
+
+OUTPUT:
+One clean transparent RGBA PNG sprite atlas, portrait 1536 x 1872 pixels, EXACTLY 8 equally sized columns and 9 equally sized rows (192 x 208 pixel cells). No visible grid, no numbers, no labels, no text, no watermark, no scenery. Genuine transparent empty background, not a drawn checkerboard. Each sprite fully inside its own cell with margin; ears, whiskers, paws and tail never cropped. Every row uses left-to-right consecutive motion phases; stable camera, subject scale, consistent anatomy, consistent fur color, stable foot baseline. Keep near-identical head/body identity across all cells, no random changes of cat.
+
+ROW PLAN (top to bottom, left aligned; unused cells truly empty):
+1. 6 frames: seated idle facing forward, gentle breathing and a slow blink, calm fluffy tail; last 2 cells empty.
+2. 8 frames: complete natural quadruped WALK cycle facing SCREEN RIGHT, paws alternately reaching forward and pushing backward relative to body, realistic cat gait, same stationary position inside each cell.
+3. 8 frames: complete natural quadruped WALK cycle facing SCREEN LEFT, the matching opposite direction walk, same scale as row 2.
+4. 4 frames: sitting, lift one front paw, friendly gentle paw wave, lower the paw; last 4 cells empty.
+5. 5 frames: begin standing, lower front chest and extend forelegs into a cat stretch, then return to standing; last 3 cells empty.
+6. 8 frames: sitting and grooming, lift paw, lick the paw, wipe cheek gently, lower paw, return to initial pose.
+7. 6 frames: sitting and looking curiously, small head tilts left and right and return to center; last 2 cells empty.
+8. 6 frames: sit, lower into lying down, curl up comfortably and settle; last 2 cells empty.
+9. 6 frames: curled sleeping cat, closed eyes, a very gentle breathing loop and tiny tail-tip movement; last 2 cells empty.
+
+Exactly 57 cat sprites, arranged on the 8 by 9 regular cell grid. Sequential movement, not 57 unrelated portraits. Do not add extra limbs, fuse paws, distort face, change fur markings, grow/shrink the cat between phases or mix cat and dog features. This is a useful sprite asset sheet, not a poster or reference board.

@@ -30,7 +30,7 @@ PASS: Tail moves continuously without a jump
 PASS: Petting produces a slow blink and returns to open eyes
 PASS: Repeated petting does not snap closed eyes open
 PASS: Rendered 90 WPF motion frames, including petting and idle actions
-INFO: Mesh vertices = 6000; 90 offscreen frames = 2.28 seconds (not an on-screen FPS measurement)
+INFO: Mesh vertices = 6000; 90 offscreen frames = 2.34 seconds (not an on-screen FPS measurement)
 PASS: Live WPF timer drives motion updates
 PASS: Petting reaches the animated view through the live timer
 PASS: New posture surface remains intact: stretch-start
@@ -124,7 +124,7 @@ PASS: Visible nose, feet and original crop anchors stay fixed during every local
 PASS: Overlapping local motions remain intact: sweater
 PASS: Rendered moving pixels agree with mouse hit regions: sweater (mismatches=0)
 PASS: Rendered 90 continuous WPF frames without tears or missing silhouettes: sweater
-INFO: sweater mesh vertices=15400; offscreen render seconds=4.19 (not screen FPS)
+INFO: sweater mesh vertices=15400; offscreen render seconds=4.27 (not screen FPS)
 PASS: Normal idle/click timing drives the new photo while automatic activities are off: sweater
 PASS: Choosing a photo immediately displays and remembers tilt
 PASS: Neutral photo silhouette and transparent clicks match: tilt
@@ -150,7 +150,7 @@ PASS: Visible nose, feet and original crop anchors stay fixed during every local
 PASS: Overlapping local motions remain intact: tilt
 PASS: Rendered moving pixels agree with mouse hit regions: tilt (mismatches=0)
 PASS: Rendered 90 continuous WPF frames without tears or missing silhouettes: tilt
-INFO: tilt mesh vertices=15688; offscreen render seconds=4.07 (not screen FPS)
+INFO: tilt mesh vertices=15688; offscreen render seconds=4.25 (not screen FPS)
 PASS: Normal idle/click timing drives the new photo while automatic activities are off: tilt
 PASS: Choosing a photo immediately displays and remembers sofa
 PASS: Neutral photo silhouette and transparent clicks match: sofa
@@ -176,7 +176,7 @@ PASS: Visible nose, feet and original crop anchors stay fixed during every local
 PASS: Overlapping local motions remain intact: sofa
 PASS: Rendered moving pixels agree with mouse hit regions: sofa (mismatches=0)
 PASS: Rendered 90 continuous WPF frames without tears or missing silhouettes: sofa
-INFO: sofa mesh vertices=10176; offscreen render seconds=3.01 (not screen FPS)
+INFO: sofa mesh vertices=10176; offscreen render seconds=4.44 (not screen FPS)
 PASS: Normal idle/click timing drives the new photo while automatic activities are off: sofa
 PASS: Choosing a photo immediately displays and remembers belly
 PASS: Neutral photo silhouette and transparent clicks match: belly
@@ -200,7 +200,7 @@ PASS: Visible nose, feet and original crop anchors stay fixed during every local
 PASS: Overlapping local motions remain intact: belly
 PASS: Rendered moving pixels agree with mouse hit regions: belly (mismatches=0)
 PASS: Rendered 90 continuous WPF frames without tears or missing silhouettes: belly
-INFO: belly mesh vertices=3417; offscreen render seconds=2.07 (not screen FPS)
+INFO: belly mesh vertices=3417; offscreen render seconds=2.22 (not screen FPS)
 PASS: Normal idle/click timing drives the new photo while automatic activities are off: belly
 PASS: Choosing a photo immediately displays and remembers back
 PASS: Neutral photo silhouette and transparent clicks match: back
@@ -224,8 +224,9 @@ PASS: Visible nose, feet and original crop anchors stay fixed during every local
 PASS: Overlapping local motions remain intact: back
 PASS: Rendered moving pixels agree with mouse hit regions: back (mismatches=0)
 PASS: Rendered 90 continuous WPF frames without tears or missing silhouettes: back
-INFO: back mesh vertices=4872; offscreen render seconds=2.34 (not screen FPS)
+INFO: back mesh vertices=4872; offscreen render seconds=2.49 (not screen FPS)
 PASS: Normal idle/click timing drives the new photo while automatic activities are off: back
+PASS: Choosing a photo immediately displays and remembers animated
 PASS: Changing a photo leaves sleep immediately and preserves automatic actions
 PASS: Walking returns to the selected photo without losing the look
 PASS: Repeated double-click action cycles through every photo and wraps
@@ -280,7 +281,7 @@ PASS: Stored look is a self-contained normalized PNG and marks, not a reference 
 PASS: Custom photos receive normal idle/petting gestures and never switch to the sample cat's whole-body poses
 PASS: Whole-body commands cannot replace a custom photo with built-in action assets
 PASS: Saved custom eye marks produce visible blinking with an intact mesh
-PASS: Rendered moving pixels agree with mouse hit regions: custom-8e8ae891f6764d58b71da5ec490782a0 (mismatches=0)
+PASS: Rendered moving pixels agree with mouse hit regions: custom-3d1f02995f964d19a532990ae1ac7e89 (mismatches=0)
 PASS: Closing the edit window discards draft marks without changing the saved look
 PASS: An existing custom look can be renamed and saved
 PASS: Editing updates the same photo rather than creating duplicates
@@ -299,5 +300,32 @@ PASS: Canceling a photo import keeps the previous ready photo and restores contr
 PASS: A broken input reports an error while keeping the prior usable photo
 PASS: An in-progress offline cutout process can be canceled without waiting for model inference
 NOT RUN: Physical mouse drags and file-dialog clicks; Computer Use kernel failed to start (windows sandbox failed: helper_unknown_error: setup refresh had errors). Actual WPF windows, editor methods, saving and rendering were exercised in-process.
+PASS: A fresh install selects the new animated look
+PASS: Selecting the animated look enables the sprite renderer and expanded routine
+PASS: Every Idle frame renders unclipped with real alpha, correct mouse hits and fixed window size
+PASS: Every WalkRight frame renders unclipped with real alpha, correct mouse hits and fixed window size
+PASS: Every WalkLeft frame renders unclipped with real alpha, correct mouse hits and fixed window size
+PASS: Every Wave frame renders unclipped with real alpha, correct mouse hits and fixed window size
+PASS: Every Stretch frame renders unclipped with real alpha, correct mouse hits and fixed window size
+PASS: Every Groom frame renders unclipped with real alpha, correct mouse hits and fixed window size
+PASS: Every Look frame renders unclipped with real alpha, correct mouse hits and fixed window size
+PASS: Every LieDown frame renders unclipped with real alpha, correct mouse hits and fixed window size
+PASS: Every Sleep frame renders unclipped with real alpha, correct mouse hits and fixed window size
+PASS: Left and right walking select distinct authored rows, without mirroring or reversing frame order
+PASS: Wave plays every frame once and returns to the selected idle look
+PASS: Groom plays every frame once and returns to the selected idle look
+PASS: Look plays every frame once and returns to the selected idle look
+PASS: Sleeping plays the six-frame lie-down once, then holds a sleep loop until woken
+PASS: Waking reverses the lie-down transition, stretches and returns to idle
+PASS: Waking midway through lying down continues from the visible frame
+PASS: Unattended animation includes walking, waving, grooming, looking, stretching and sleeping
+PASS: Pause freezes the exact new action frame
+PASS: Dragging pauses the new frame sequence
+PASS: An open menu pauses the new frame sequence
+PASS: Hiding and restoring preserve the new action frame
+PASS: Desktop travel agrees with the visible right walking row
+PASS: Desktop travel agrees with the visible left walking row
+PASS: Original-photo looks retain their calibrated local motion renderer
+PASS: The live WPF timer visibly advances the new gesture frames (ticks=22, frames=4, visible=True, activity=Waving)
 PASS: Rendered actual WPF pet view to pet-preview.png
 Not covered: physical mouse input, Windows tray clicks, other Windows computers, mixed-DPI monitors.

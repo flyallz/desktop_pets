@@ -35,7 +35,7 @@ namespace PhotoCat
 
         private void InitializeCompanion()
         {
-            preferences = testing ? new PetPreferences() : PetPreferences.Load(PetPreferences.DefaultPath, out settingsNotice);
+            preferences = testing ? new PetPreferences { LookId = "original" } : PetPreferences.Load(PetPreferences.DefaultPath, out settingsNotice);
             looks.Add(new PhotoLook("original", "原版坐姿", bitmap));
             string[] resources = Assembly.GetExecutingAssembly().GetManifestResourceNames();
             string[,] choices = { { "sweater", "红毛衣" }, { "tilt", "歪头看你" }, { "sofa", "乖乖侧坐" },
@@ -43,6 +43,8 @@ namespace PhotoCat
             for (int i = 0; i < choices.GetLength(0); i++)
                 if (Array.IndexOf(resources, "PhotoCat.looks." + choices[i, 0] + ".png") >= 0)
                     looks.Add(new PhotoLook(choices[i, 0], choices[i, 1], LoadPhoto("looks." + choices[i, 0] + ".png")));
+            cat.LoadSpriteAtlas(LoadPhoto("sprites.cat-spritesheet.png"));
+            looks.Add(new PhotoLook("animated", "动作版 · 9组新动作", cat.SpriteIdlePhoto));
             photoStore = new UserPhotoStore(UserPhotoStore.DefaultFolder);
             if (!testing)
             {
@@ -113,6 +115,8 @@ namespace PhotoCat
         private void ApplyLookPhoto()
         {
             PhotoLook look = looks[selectedLook];
+            cat.SetSpriteMode(look.Id == "animated");
+            motion.SetSpriteActions(look.Id == "animated");
             if (look.IsCustom) CustomMotionSafety.Apply(cat, look.Photo, look.Id, look.Customization ?? new PhotoCustomization());
             else cat.SetIdlePhoto(look.Photo, look.Id);
         }

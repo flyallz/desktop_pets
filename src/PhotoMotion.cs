@@ -11,17 +11,19 @@ namespace PhotoCat
     // One continuous textured surface keeps the original fur and transparent silhouette.
     // The landmarks below belong to assets/cat.png, a 953 x 1347 photograph cutout.
     internal enum CatPosture { Sit, Stretch, Rest, Walk }
-    internal enum CatActivity { Companion, Stretching, Sleeping, Waking, Walking }
+    internal enum CatActivity { Companion, Stretching, Sleeping, Waking, Walking, Waving, Grooming, Looking }
 
     internal struct MotionPose
     {
         internal double Blink, LeftEar, RightEar, Tail, Breath, Effort, ClosedEyes;
         internal CatPosture Posture;
         internal int WalkFrame;
+        internal SpriteAction Sprite;
+        internal int SpriteFrame;
         internal bool FaceLeft;
     }
 
-    internal sealed class PhotoMotion : FrameworkElement
+    internal sealed partial class PhotoMotion : FrameworkElement
     {
         private readonly Viewport3D viewport = new Viewport3D();
         private readonly MeshGeometry3D mesh = new MeshGeometry3D();
@@ -36,7 +38,7 @@ namespace PhotoCat
         private MotionPose pose;
         private IdlePhotoMotion idleMotion;
         private double idleHeadTop = 56;
-        internal double HeadTop { get { return pose.Posture == CatPosture.Sit ? idleHeadTop : pose.Posture == CatPosture.Walk ? 812 : pose.Posture == CatPosture.Stretch ? 877 : 959; } }
+        internal double HeadTop { get { if (spriteMode) return sprites.HeadTop(pose); return pose.Posture == CatPosture.Sit ? idleHeadTop : pose.Posture == CatPosture.Walk ? 812 : pose.Posture == CatPosture.Stretch ? 877 : 959; } }
         internal MotionPose Pose { get { return pose; } }
         internal int VertexCount { get { return rest.Count; } }
 
@@ -165,6 +167,7 @@ namespace PhotoCat
         internal bool IsPhotoPixel(Point local)
         {
             Point original = SourcePoint(local);
+            if (spriteMode) return sprites.Hit(original, pose);
             int x = (int)Math.Floor(original.X), y = (int)Math.Floor(original.Y);
             byte[] alpha = pose.Posture == CatPosture.Walk ? walkingAlpha[pose.WalkFrame] : alphaPixels[pose.Posture];
             return x >= 0 && y >= 0 && x < source.PixelWidth && y < source.PixelHeight
@@ -182,6 +185,13 @@ namespace PhotoCat
 
         internal void SetPose(MotionPose value)
         {
+            if (spriteMode)
+            {
+                bool changed = sprites.ActionFor(pose) != sprites.ActionFor(value) || sprites.FrameFor(pose) != sprites.FrameFor(value);
+                pose = value;
+                if (changed) InvalidateVisual();
+                return;
+            }
             Material material = value.Posture == CatPosture.Walk ? walkingMaterials[value.WalkFrame] : materials[value.Posture];
             if (model.Material != material)
             {
@@ -286,6 +296,7 @@ namespace PhotoCat
                 return new Point(-1, -1);
             Point target = new Point(local.X * source.PixelWidth / ActualWidth,
                 local.Y * source.PixelHeight / ActualHeight);
+            if (spriteMode) return target;
             Int32Collection indices = mesh.TriangleIndices;
             Point3DCollection positions = mesh.Positions;
             for (int i = 0; i < indices.Count; i += 3)
@@ -308,6 +319,7 @@ namespace PhotoCat
 
         internal bool HasValidSurface()
         {
+            if (spriteMode) return sprites != null;
             Int32Collection indices = mesh.TriangleIndices;
             for (int i = 0; i < indices.Count; i += 3)
             {
@@ -328,7 +340,11 @@ namespace PhotoCat
         }
         protected override Size MeasureOverride(Size availableSize) { viewport.Measure(availableSize); return viewport.DesiredSize; }
         protected override Size ArrangeOverride(Size finalSize) { viewport.Arrange(new Rect(finalSize)); return finalSize; }
-        protected override void OnRender(DrawingContext dc) { dc.DrawRectangle(Brushes.Transparent, null, new Rect(RenderSize)); }
+        protected override void OnRender(DrawingContext dc)
+        {
+            dc.DrawRectangle(Brushes.Transparent, null, new Rect(RenderSize));
+            if (spriteMode) RenderSprite(dc);
+        }
     }
 
     // Motion time advances only while visible, unpaused and free of drag/menu interaction.
@@ -345,9 +361,11 @@ namespace PhotoCat
         internal bool IsTurning { get { return Activity == CatActivity.Walking && turnPause > 0; } }
         private double blinkAt = -10, earAt = -10, tailAt = -10, petAt = -10, activityAt, wakingEyes = 1, settlingEyes;
         private bool leftEar, manualSleep;
+        private int wakingSpriteFrame = 5;
         private CatActivity lastAutomatic;
         internal CatActivity Activity { get; private set; }
         internal bool Automatic { get; private set; }
+        internal bool SpriteActions { get; private set; }
         internal bool IsSleeping { get { return Activity == CatActivity.Sleeping; } }
         internal PetMotion(int seed)
         {
@@ -357,6 +375,32 @@ namespace PhotoCat
             routine.Enqueue(CatActivity.Stretching);
             routine.Enqueue(CatActivity.Sleeping);
             nextBlink = 1.8; nextEar = 4; nextTail = 1;
+        }
+        internal void SetSpriteActions(bool enabled)
+        {
+            if (SpriteActions == enabled) return;
+            SpriteActions = enabled;
+            routine.Clear();
+            routine.Enqueue(CatActivity.Walking);
+            if (enabled)
+            {
+                routine.Enqueue(CatActivity.Waving);
+                routine.Enqueue(CatActivity.Grooming);
+                routine.Enqueue(CatActivity.Looking);
+            }
+            routine.Enqueue(CatActivity.Stretching);
+            routine.Enqueue(CatActivity.Sleeping);
+        }
+        internal void Gesture(SpriteAction action)
+        {
+            if (!SpriteActions) return;
+            if (action == SpriteAction.Wave) Activity = CatActivity.Waving;
+            else if (action == SpriteAction.Groom) Activity = CatActivity.Grooming;
+            else if (action == SpriteAction.Look) Activity = CatActivity.Looking;
+            else return;
+            activityAt = time;
+            WalkDistance = 0;
+            turnPause = 0;
         }
         internal void SetAutomatic(bool enabled)
         {
@@ -422,7 +466,9 @@ namespace PhotoCat
         {
             if (routine.Count == 0)
             {
-                CatActivity[] choices = { CatActivity.Walking, CatActivity.Stretching, CatActivity.Sleeping };
+                CatActivity[] choices = SpriteActions
+                    ? new CatActivity[] { CatActivity.Walking, CatActivity.Waving, CatActivity.Grooming, CatActivity.Looking, CatActivity.Stretching, CatActivity.Sleeping }
+                    : new CatActivity[] { CatActivity.Walking, CatActivity.Stretching, CatActivity.Sleeping };
                 for (int i = choices.Length - 1; i > 0; i--)
                 {
                     int j = random.Next(i + 1);
@@ -437,6 +483,9 @@ namespace PhotoCat
             lastAutomatic = routine.Dequeue();
             if (lastAutomatic == CatActivity.Walking) Walk();
             else if (lastAutomatic == CatActivity.Stretching) Stretch();
+            else if (lastAutomatic == CatActivity.Waving) Gesture(SpriteAction.Wave);
+            else if (lastAutomatic == CatActivity.Grooming) Gesture(SpriteAction.Groom);
+            else if (lastAutomatic == CatActivity.Looking) Gesture(SpriteAction.Look);
             else Sleep(false);
         }
         internal void Stretch()
@@ -456,6 +505,7 @@ namespace PhotoCat
         internal void Wake()
         {
             if (!IsSleeping) return;
+            wakingSpriteFrame = Math.Min(5, (int)((time - activityAt) / 1.5 * 6));
             wakingEyes = settlingEyes + (1 - settlingEyes) * Smooth((time - activityAt) / 0.9);
             Activity = CatActivity.Waking;
             activityAt = time;
@@ -479,20 +529,32 @@ namespace PhotoCat
             }
             double elapsed = time - activityAt;
             if (Activity == CatActivity.Stretching && elapsed >= 3.2) FinishActivity();
+            if ((Activity == CatActivity.Waving && elapsed >= 2.4)
+                || (Activity == CatActivity.Grooming && elapsed >= 4)
+                || (Activity == CatActivity.Looking && elapsed >= 3)) FinishActivity();
             if (Activity == CatActivity.Sleeping && !manualSleep && elapsed >= 32) Wake();
             if (Activity == CatActivity.Waking && time - activityAt >= 1.4) Stretch();
             if (Activity == CatActivity.Companion && Automatic && time >= nextActivity) ChooseActivity();
             elapsed = time - activityAt;
             if (Activity == CatActivity.Walking)
                 return new MotionPose { Posture = CatPosture.Walk,
-                    WalkFrame = (int)(WalkingProgress(walkingTime) / WalkCycleSeconds * 8) % 8 };
+                    WalkFrame = (int)(WalkingProgress(walkingTime) / WalkCycleSeconds * 8) % 8, Sprite = SpriteAction.WalkRight };
             if (Activity == CatActivity.Stretching)
-                return new MotionPose { Posture = CatPosture.Stretch, Effort = Math.Sin(elapsed / 3.2 * Math.PI),
+                return new MotionPose { Posture = CatPosture.Stretch, Sprite = SpriteAction.Stretch, SpriteFrame = Math.Min(4, (int)(elapsed / 3.2 * 5)), Effort = Math.Sin(elapsed / 3.2 * Math.PI),
                     Breath = Math.Sin(time * Math.PI * 2 / 4.6) };
             if (Activity == CatActivity.Sleeping || Activity == CatActivity.Waking)
                 return new MotionPose { Posture = CatPosture.Rest,
+                    Sprite = Activity == CatActivity.Waking || elapsed < 1.5 ? SpriteAction.LieDown : SpriteAction.Sleep,
+                    SpriteFrame = Activity == CatActivity.Waking ? Math.Max(0, wakingSpriteFrame - (int)(elapsed / 1.4 * (wakingSpriteFrame + 1)))
+                        : elapsed < 1.5 ? Math.Min(5, (int)(elapsed / 1.5 * 6)) : (int)((elapsed - 1.5) * 2) % 6,
                     ClosedEyes = Activity == CatActivity.Sleeping ? settlingEyes + (1 - settlingEyes) * Smooth(elapsed / 0.9) : wakingEyes * (1 - Smooth(elapsed / 1.1)),
                     Breath = Math.Sin(time * Math.PI * 2 / 6.4) };
+            if (Activity == CatActivity.Waving)
+                return new MotionPose { Sprite = SpriteAction.Wave, SpriteFrame = Math.Min(3, (int)(elapsed / 2.4 * 4)) };
+            if (Activity == CatActivity.Grooming)
+                return new MotionPose { Sprite = SpriteAction.Groom, SpriteFrame = Math.Min(7, (int)(elapsed / 4 * 8)) };
+            if (Activity == CatActivity.Looking)
+                return new MotionPose { Sprite = SpriteAction.Look, SpriteFrame = Math.Min(5, (int)(elapsed / 3 * 6)) };
             if (time >= nextBlink) { blinkAt = time; nextBlink = time + 3.5 + random.NextDouble() * 4; }
             if (time >= nextEar) { earAt = time; leftEar = random.Next(2) == 0; nextEar = time + 8 + random.NextDouble() * 9; }
             if (time >= nextTail) { tailAt = time; nextTail = time + 8 + random.NextDouble() * 7; }
@@ -500,7 +562,12 @@ namespace PhotoCat
             double tailTime = time - tailAt;
             double tail = tailTime >= 0 && tailTime < 3.8
                 ? Math.Sin(tailTime / 3.8 * Math.PI) * Math.Sin(tailTime / 3.8 * Math.PI * 2) : 0;
+            double blinkElapsed = time - blinkAt;
+            double petElapsed = time - petAt;
+            int idleFrame = petElapsed >= 0 && petElapsed < 1.5 ? Math.Min(5, (int)(petElapsed / 1.5 * 6))
+                : blinkElapsed >= 0 && blinkElapsed < 0.9 ? Math.Min(5, (int)(blinkElapsed / 0.9 * 6)) : 0;
             return new MotionPose {
+                Sprite = SpriteAction.Idle, SpriteFrame = idleFrame,
                 Blink = Math.Max(Pulse(time - blinkAt, 0.10, 0.04, 0.18),
                     0.94 * Pulse(time - petAt, 0.42, 0.36, 0.72)),
                 LeftEar = leftEar ? twitch : 0, RightEar = leftEar ? 0 : twitch,

@@ -29,7 +29,7 @@ namespace PhotoCat
                 SelectLook(i, false);
                 Check(preferences.LookId == looks[i].Id && motion.Activity == CatActivity.Companion,
                     "Choosing a photo immediately displays and remembers " + looks[i].Id, checks);
-                if (i > 0)
+                if (i > 0 && looks[i].Id != "animated")
                 {
                     byte[] bytes = new byte[953 * 1347 * 4]; looks[i].Photo.CopyPixels(bytes, 953 * 4, 0);
                     cat.SetPose(new MotionPose());
@@ -47,7 +47,7 @@ namespace PhotoCat
                         }
                     Check(hit > 20 && clear > 20, "Neutral photo silhouette and transparent clicks match: " + looks[i].Id, checks);
                 }
-                if (i > 0) VerifyPhotoLocalMotion(i, folder, checks);
+                if (i > 0 && looks[i].Id != "animated") VerifyPhotoLocalMotion(i, folder, checks);
                 cat.SetPose(new MotionPose());
                 bubble.Visibility = Visibility.Collapsed;
                 SaveElement(scene, (int)Math.Ceiling(Width), (int)Math.Ceiling(Height), Path.Combine(folder, "look-" + looks[i].Id + ".png"));

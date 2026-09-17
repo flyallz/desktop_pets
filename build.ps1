@@ -1,4 +1,4 @@
-﻿$ErrorActionPreference = 'Stop'
+$ErrorActionPreference = 'Stop'
 $sampleRoot = $PSScriptRoot
 $framework = Join-Path $env:WINDIR 'Microsoft.NET\Framework64\v4.0.30319'
 $compiler = Join-Path $framework 'csc.exe'
@@ -22,6 +22,9 @@ foreach ($frame in 0..7) {
 foreach ($photo in Get-ChildItem -LiteralPath (Join-Path $sampleRoot 'assets\looks') -Filter '*.png' -ErrorAction SilentlyContinue) {
     $arguments += '/resource:' + $photo.FullName + ',PhotoCat.looks.' + $photo.Name
 }
+$spriteAtlas = Join-Path $sampleRoot 'assets\sprites\cat-spritesheet.png'
+if (-not (Test-Path -LiteralPath $spriteAtlas)) { throw 'Missing cat sprite atlas' }
+$arguments += '/resource:' + $spriteAtlas + ',PhotoCat.sprites.cat-spritesheet.png'
 $arguments += '/resource:' + (Join-Path $sampleRoot 'src\PhotoEditor.xaml') + ',PhotoCat.PhotoEditor.xaml'
 $photoTools = Join-Path $sampleRoot '.build\photo-tools.zip'
 if (Test-Path -LiteralPath $photoTools) {
@@ -31,7 +34,7 @@ if (Test-Path -LiteralPath $photoTools) {
 $arguments += '/win32icon:'  + (Join-Path $sampleRoot 'assets\cat.ico')
 $arguments += Join-Path $sampleRoot 'src\CatPet.cs'
 $arguments += Join-Path $sampleRoot 'src\PhotoMotion.cs'
-foreach ($source in @('UserPhotoStore', 'PhotoCustomization', 'PhotoEditPixels', 'LocalPhotoCutout', 'PhotoEditorWindow', 'UserPhotoChecks', 'IdlePhotoMotion', 'PetPreferences', 'DeepSeekChat', 'ChatWindows', 'PetCompanion', 'CompanionChecks', 'PhotoMotionChecks')) {
+foreach ($source in @('UserPhotoStore', 'PhotoCustomization', 'PhotoEditPixels', 'LocalPhotoCutout', 'PhotoEditorWindow', 'UserPhotoChecks', 'IdlePhotoMotion', 'PetPreferences', 'DeepSeekChat', 'ChatWindows', 'PetCompanion', 'CompanionChecks', 'PhotoMotionChecks', 'SpriteAnimation', 'SpriteChecks')) {
     $arguments += Join-Path $sampleRoot ('src\' + $source + '.cs')
 }
 & $compiler @arguments

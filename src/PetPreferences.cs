@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
@@ -8,7 +8,7 @@ namespace PhotoCat
 {
     internal sealed class PetPreferences
     {
-        internal string LookId = "original";
+        internal string LookId = "animated";
         internal string ApiKey = "";
         internal int GreetingMinutes;
         internal static string DefaultPath
@@ -33,7 +33,7 @@ namespace PhotoCat
                 if (new FileInfo(path).Length > 32768) throw new InvalidDataException();
                 Stored saved = new JavaScriptSerializer().Deserialize<Stored>(File.ReadAllText(path, Encoding.UTF8));
                 if (saved == null) throw new InvalidDataException();
-                result.LookId = String.IsNullOrEmpty(saved.LookId) ? "original" : saved.LookId;
+                result.LookId = String.IsNullOrEmpty(saved.LookId) ? "animated" : saved.LookId;
                 result.GreetingMinutes = ValidInterval(saved.GreetingMinutes) ? saved.GreetingMinutes : 0;
                 if (!String.IsNullOrEmpty(saved.ProtectedApiKey))
                 {

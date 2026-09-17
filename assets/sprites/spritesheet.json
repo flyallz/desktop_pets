@@ -1,0 +1,446 @@
+{
+  "schema": "cat-spritesheet-v1",
+  "image": "cat-spritesheet.png",
+  "width": 1536,
+  "height": 1872,
+  "columns": 8,
+  "rows": 9,
+  "frameWidth": 192,
+  "frameHeight": 208,
+  "frameCount": 57,
+  "actions": [
+    {
+      "name": "idle",
+      "label": "坐着眨眼",
+      "row": 0,
+      "frames": 6,
+      "fps": 6,
+      "loop": true,
+      "rects": [
+        {
+          "x": 0,
+          "y": 0,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 192,
+          "y": 0,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 384,
+          "y": 0,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 576,
+          "y": 0,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 768,
+          "y": 0,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 960,
+          "y": 0,
+          "width": 192,
+          "height": 208
+        }
+      ]
+    },
+    {
+      "name": "walk_right",
+      "label": "向右行走",
+      "row": 1,
+      "frames": 8,
+      "fps": 8,
+      "loop": true,
+      "rects": [
+        {
+          "x": 0,
+          "y": 208,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 192,
+          "y": 208,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 384,
+          "y": 208,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 576,
+          "y": 208,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 768,
+          "y": 208,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 960,
+          "y": 208,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 1152,
+          "y": 208,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 1344,
+          "y": 208,
+          "width": 192,
+          "height": 208
+        }
+      ]
+    },
+    {
+      "name": "walk_left",
+      "label": "向左行走",
+      "row": 2,
+      "frames": 8,
+      "fps": 8,
+      "loop": true,
+      "rects": [
+        {
+          "x": 0,
+          "y": 416,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 192,
+          "y": 416,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 384,
+          "y": 416,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 576,
+          "y": 416,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 768,
+          "y": 416,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 960,
+          "y": 416,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 1152,
+          "y": 416,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 1344,
+          "y": 416,
+          "width": 192,
+          "height": 208
+        }
+      ]
+    },
+    {
+      "name": "wave",
+      "label": "抬爪打招呼",
+      "row": 3,
+      "frames": 4,
+      "fps": 5,
+      "loop": false,
+      "rects": [
+        {
+          "x": 0,
+          "y": 624,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 192,
+          "y": 624,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 384,
+          "y": 624,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 576,
+          "y": 624,
+          "width": 192,
+          "height": 208
+        }
+      ]
+    },
+    {
+      "name": "stretch",
+      "label": "伸懒腰",
+      "row": 4,
+      "frames": 5,
+      "fps": 5,
+      "loop": false,
+      "rects": [
+        {
+          "x": 0,
+          "y": 832,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 192,
+          "y": 832,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 384,
+          "y": 832,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 576,
+          "y": 832,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 768,
+          "y": 832,
+          "width": 192,
+          "height": 208
+        }
+      ]
+    },
+    {
+      "name": "groom",
+      "label": "舔爪洗脸",
+      "row": 5,
+      "frames": 8,
+      "fps": 6,
+      "loop": false,
+      "rects": [
+        {
+          "x": 0,
+          "y": 1040,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 192,
+          "y": 1040,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 384,
+          "y": 1040,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 576,
+          "y": 1040,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 768,
+          "y": 1040,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 960,
+          "y": 1040,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 1152,
+          "y": 1040,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 1344,
+          "y": 1040,
+          "width": 192,
+          "height": 208
+        }
+      ]
+    },
+    {
+      "name": "head_tilt",
+      "label": "歪头张望",
+      "row": 6,
+      "frames": 6,
+      "fps": 5,
+      "loop": false,
+      "rects": [
+        {
+          "x": 0,
+          "y": 1248,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 192,
+          "y": 1248,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 384,
+          "y": 1248,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 576,
+          "y": 1248,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 768,
+          "y": 1248,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 960,
+          "y": 1248,
+          "width": 192,
+          "height": 208
+        }
+      ]
+    },
+    {
+      "name": "lie_down",
+      "label": "趴下",
+      "row": 7,
+      "frames": 6,
+      "fps": 5,
+      "loop": false,
+      "rects": [
+        {
+          "x": 0,
+          "y": 1456,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 192,
+          "y": 1456,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 384,
+          "y": 1456,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 576,
+          "y": 1456,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 768,
+          "y": 1456,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 960,
+          "y": 1456,
+          "width": 192,
+          "height": 208
+        }
+      ]
+    },
+    {
+      "name": "sleep",
+      "label": "蜷着睡觉",
+      "row": 8,
+      "frames": 6,
+      "fps": 5,
+      "loop": true,
+      "rects": [
+        {
+          "x": 0,
+          "y": 1664,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 192,
+          "y": 1664,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 384,
+          "y": 1664,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 576,
+          "y": 1664,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 768,
+          "y": 1664,
+          "width": 192,
+          "height": 208
+        },
+        {
+          "x": 960,
+          "y": 1664,
+          "width": 192,
+          "height": 208
+        }
+      ]
+    }
+  ],
+  "note": "AI-generated first-edition motion frames. Real transparent alpha added locally. Transition actions should not repeat as loops."
+}
